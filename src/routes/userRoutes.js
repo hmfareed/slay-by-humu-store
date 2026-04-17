@@ -4,7 +4,7 @@ const { registerUser, loginUser, getMe, updateProfile, changePassword, uploadAva
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/tmp/uploads/' });
 
 router.post('/register', registerUser);
 router.post('/login', loginUser);

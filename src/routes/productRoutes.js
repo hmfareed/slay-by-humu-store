@@ -7,7 +7,7 @@ const {
 const multer = require('multer');
 const { protect, isAdmin } = require('../middleware/auth');
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ dest: '/tmp/uploads/' });
 
 const router = express.Router();
 
