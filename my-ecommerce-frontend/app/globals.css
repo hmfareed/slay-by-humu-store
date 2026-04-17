@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+  
+  --color-brand-bg: var(--bg-main);
+  --color-brand-panel: var(--bg-panel);
+  --color-brand-text: var(--text-main);
+  --color-brand-muted: var(--text-muted);
+  --color-brand-accent: #C5A059; /* Soft Bronze */
+  --color-brand-accent-hover: #b08d4b;
+  
+  --shadow-soft: 0 20px 60px -15px var(--shadow-color);
+}
+
+@layer base {
+  :root {
+    --bg-main: #F9F9F9;
+    --bg-panel: #FFFFFF;
+    --text-main: #1A1A1A;
+    --text-muted: rgba(26, 26, 26, 0.5);
+    --shadow-color: rgba(26, 26, 26, 0.05); /* very subtle */
+  }
+
+  .dark {
+    --bg-main: #0F0F0F;
+    --bg-panel: #141414;
+    --text-main: #F9F9F9;
+    --text-muted: rgba(249, 249, 249, 0.5);
+    --shadow-color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  color: var(--color-brand-text);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-playfair);
+}
+
+/* Premium Buttons */
+.btn-primary {
+  @apply bg-brand-text hover:bg-brand-muted text-brand-bg font-sans font-medium py-4 px-10 transition-colors uppercase tracking-[0.2em] text-xs flex justify-center items-center gap-2;
+}
+
+.btn-secondary {
+  @apply border border-brand-text/20 hover:border-brand-text text-brand-text font-sans font-medium py-4 px-10 transition-colors uppercase tracking-[0.2em] text-xs flex justify-center items-center gap-2;
+}
+
+.btn-gold {
+  @apply bg-brand-accent hover:bg-[var(--color-brand-accent-hover)] text-white font-sans font-medium py-4 px-10 transition-all shadow-soft shadow-brand-accent/20 uppercase tracking-[0.2em] text-xs flex justify-center items-center gap-2;
+}
+
+/* Custom Scrollbar - Minimal */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent; 
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-brand-muted); 
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-accent); 
+}
+
+/* Safe area for bottom nav */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Shadow utility for luxury cards */
+.shadow-luxury {
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.08);
+}
