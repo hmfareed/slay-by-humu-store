@@ -1,6 +1,0 @@
-{
-  "installCommand": "cd my-ecommerce-frontend && npm install --legacy-peer-deps",
-  "buildCommand": "cd my-ecommerce-frontend && npm run build",
-  "outputDirectory": "my-ecommerce-frontend/.next",
-  "framework": "nextjs"
-}

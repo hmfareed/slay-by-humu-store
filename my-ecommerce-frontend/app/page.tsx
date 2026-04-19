@@ -2,9 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
+import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useCallback } from 'react';
 
@@ -38,7 +39,7 @@ export default function HomePage() {
     setMounted(true);
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         if (res.ok) {
           const data: Product[] = await res.json();
           // Filter to only products with images (real wigs, not test data)

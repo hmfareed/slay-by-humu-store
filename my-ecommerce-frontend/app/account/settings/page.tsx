@@ -4,11 +4,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Moon, Sun, Bell, BellOff, Lock, Eye, EyeOff } from 'lucide-react';
-import { useAuth } from 'src/context/AuthContext';
-import { useNotification } from 'src/context/NotificationContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { useNotification } from '@/src/context/NotificationContext';
 import { useTheme } from 'next-themes';
+import { API_URL } from '@/src/lib/api';
 
-const API = 'http://localhost:5000/api';
+const API = API_URL;
 
 export default function SettingsPage() {
   const { token, isLoggedIn } = useAuth();

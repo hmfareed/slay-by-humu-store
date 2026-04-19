@@ -2,10 +2,11 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { useCartStore } from 'src/store/cartStore';
-import { useWishlistStore } from 'src/store/wishlistStore';
+import { useCartStore } from '@/src/store/cartStore';
+import { useWishlistStore } from '@/src/store/wishlistStore';
+import { API_URL } from '@/src/lib/api';
 
-const API = 'http://localhost:5000/api';
+const API = API_URL;
 
 interface UserInfo {
   _id: string;

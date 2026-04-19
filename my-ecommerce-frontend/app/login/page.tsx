@@ -5,12 +5,13 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from 'components/ThemeToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
-import { useNotification } from 'src/context/NotificationContext';
-import { useAuth } from 'src/context/AuthContext';
-import { useCartStore } from 'src/store/cartStore';
-import { useWishlistStore } from 'src/store/wishlistStore';
+import { useNotification } from '@/src/context/NotificationContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { useCartStore } from '@/src/store/cartStore';
+import { useWishlistStore } from '@/src/store/wishlistStore';
+import { API_URL } from '@/src/lib/api';
 
 export default function LoginPage() {
   const { showNotification } = useNotification();
@@ -50,8 +51,8 @@ export default function LoginPage() {
     setLoading(true);
 
     const url = isLogin 
-      ? 'http://localhost:5000/api/users/login' 
-      : 'http://localhost:5000/api/users/register';
+      ? `${API_URL}/users/login` 
+      : `${API_URL}/users/register`;
 
     const body = isLogin 
       ? { email: emailStr, password: formData.password }

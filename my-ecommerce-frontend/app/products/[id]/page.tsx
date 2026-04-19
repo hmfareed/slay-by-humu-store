@@ -2,15 +2,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from 'components/ThemeToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Menu } from 'lucide-react';
-import ImageLoupe from '../../../components/ImageLoupe';
-import MagneticButton from '../../../components/MagneticButton';
-import { useNotification } from 'src/context/NotificationContext';
+import ImageLoupe from '@/components/ImageLoupe';
+import MagneticButton from '@/components/MagneticButton';
+import { useNotification } from '@/src/context/NotificationContext';
+import { API_URL } from '@/src/lib/api';
 
 interface Product {
   _id: string;
@@ -35,7 +36,7 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${id}`);
+        const res = await fetch(`${API_URL}/products/${id}`);
         if (!res.ok) throw new Error('Failed to fetch product');
         const data = await res.json();
         setProduct(data);

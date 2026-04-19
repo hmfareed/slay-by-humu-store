@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "../components/ThemeProvider";
-import SmoothScroll from "../components/SmoothScroll";
-import SlideOutCart from "../components/SlideOutCart";
-import BottomNav from "../components/BottomNav";
-import { NotificationProvider } from "../src/context/NotificationContext";
-import { AuthProvider } from "../src/context/AuthContext";
-import Toaster from "../components/Toaster";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import SmoothScroll from "@/components/SmoothScroll";
+import SlideOutCart from "@/components/SlideOutCart";
+import BottomNav from "@/components/BottomNav";
+import { NotificationProvider } from "@/src/context/NotificationContext";
+import { AuthProvider } from "@/src/context/AuthContext";
+import Toaster from "@/components/Toaster";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],

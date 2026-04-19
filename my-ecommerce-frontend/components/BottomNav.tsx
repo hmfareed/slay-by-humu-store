@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingBag, Heart, UserCircle } from 'lucide-react';
-import { useCartStore } from 'src/store/cartStore';
-import { useWishlistStore } from 'src/store/wishlistStore';
+import { useCartStore } from '@/src/store/cartStore';
+import { useWishlistStore } from '@/src/store/wishlistStore';
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 

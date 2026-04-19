@@ -1,12 +1,12 @@
 'use client';
 
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useNotification } from 'src/context/NotificationContext';
+import { useNotification } from '@/src/context/NotificationContext';
 
 export default function SlideOutCart() {
   const items = useCartStore((state) => state.items);

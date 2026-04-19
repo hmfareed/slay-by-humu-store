@@ -3,11 +3,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from 'components/ThemeToggle';
-import { useNotification } from 'src/context/NotificationContext';
-import { useAuth } from 'src/context/AuthContext';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { useNotification } from '@/src/context/NotificationContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { API_URL } from '@/src/lib/api';
 
 export default function CheckoutPage() {
   const { showNotification } = useNotification();
@@ -32,7 +33,7 @@ export default function CheckoutPage() {
     if (!token) return;
     const fetchDefault = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/addresses', {
+        const res = await fetch(`${API_URL}/addresses`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -77,7 +78,7 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

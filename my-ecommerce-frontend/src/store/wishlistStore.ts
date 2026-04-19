@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { API_URL } from '@/src/lib/api';
 
-const API_BAR_URL = 'http://localhost:5000/api';
+const API_BAR_URL = API_URL;
 
 interface WishlistProduct {
   _id: string;

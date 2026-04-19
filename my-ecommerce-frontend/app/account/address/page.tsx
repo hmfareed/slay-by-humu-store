@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Plus, MapPin, Pencil, Trash2, Check, X, Star } from 'lucide-react';
-import { useAuth } from 'src/context/AuthContext';
-import { useNotification } from 'src/context/NotificationContext';
+import { useAuth } from '@/src/context/AuthContext';
+import { useNotification } from '@/src/context/NotificationContext';
 import { useRouter } from 'next/navigation';
+import { API_URL } from '@/src/lib/api';
 
-const API = 'http://localhost:5000/api';
+const API = API_URL;
 
 interface Address {
   _id: string;

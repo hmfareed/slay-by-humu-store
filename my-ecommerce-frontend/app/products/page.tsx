@@ -4,9 +4,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ThemeToggle } from 'components/ThemeToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Menu } from 'lucide-react';
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
+import { API_URL } from '@/src/lib/api';
 
 interface Product {
   _id: string;
@@ -30,7 +31,7 @@ export default function ProductsPage() {
     setMounted(true);
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
         setProducts(data);

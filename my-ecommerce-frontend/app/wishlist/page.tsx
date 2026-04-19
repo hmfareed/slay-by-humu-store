@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, ShoppingBag, ArrowLeft, Trash2, Package } from 'lucide-react';
-import { useWishlistStore } from 'src/store/wishlistStore';
-import { useCartStore } from 'src/store/cartStore';
-import { useNotification } from 'src/context/NotificationContext';
+import { useWishlistStore } from '@/src/store/wishlistStore';
+import { useCartStore } from '@/src/store/cartStore';
+import { useNotification } from '@/src/context/NotificationContext';
 
 export default function WishlistPage() {
   const items = useWishlistStore((s) => s.items);

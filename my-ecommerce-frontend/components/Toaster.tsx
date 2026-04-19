@@ -1,6 +1,6 @@
 'use client';
 
-import { useNotification } from '../src/context/NotificationContext';
+import { useNotification } from '@/src/context/NotificationContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle, AlertCircle, Info } from 'lucide-react';
 

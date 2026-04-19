@@ -4,9 +4,10 @@ import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, ShoppingBag, ArrowLeft, SlidersHorizontal } from 'lucide-react';
-import { useCartStore } from 'src/store/cartStore';
-import { useWishlistStore } from 'src/store/wishlistStore';
-import { useNotification } from 'src/context/NotificationContext';
+import { useCartStore } from '@/src/store/cartStore';
+import { useWishlistStore } from '@/src/store/wishlistStore';
+import { useNotification } from '@/src/context/NotificationContext';
+import { API_URL } from '@/src/lib/api';
 
 interface Product {
   _id: string;
@@ -42,7 +43,7 @@ export default function CategoriesPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/products');
+        const res = await fetch(`${API_URL}/products`);
         if (res.ok) {
           const data: Product[] = await res.json();
           const realProducts = data.filter(

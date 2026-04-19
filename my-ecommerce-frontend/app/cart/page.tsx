@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useCartStore } from 'src/store/cartStore';
+import { useCartStore } from '@/src/store/cartStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
-import { useNotification } from 'src/context/NotificationContext';
+import { useNotification } from '@/src/context/NotificationContext';
+import { API_URL } from '@/src/lib/api';
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
@@ -26,7 +27,7 @@ export default function CartPage() {
       const token = localStorage.getItem('token');
       if (token && items.length === 0) {
         try {
-          const res = await fetch('http://localhost:5000/api/cart', {
+          const res = await fetch(`${API_URL}/cart`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {

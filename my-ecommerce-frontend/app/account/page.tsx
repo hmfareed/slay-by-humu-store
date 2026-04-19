@@ -7,14 +7,15 @@ import {
   ArrowLeft, User, Package, MapPin, CreditCard, Settings, LogOut,
   ChevronRight, ShoppingBag, Heart, Moon, Sun
 } from 'lucide-react';
-import { useAuth } from 'src/context/AuthContext';
-import { useNotification } from 'src/context/NotificationContext';
-import { useCartStore } from 'src/store/cartStore';
-import { useWishlistStore } from 'src/store/wishlistStore';
+import { useAuth } from '@/src/context/AuthContext';
+import { useNotification } from '@/src/context/NotificationContext';
+import { useCartStore } from '@/src/store/cartStore';
+import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useTheme } from 'next-themes';
-import { ThemeToggle } from 'components/ThemeToggle';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { API_URL } from '@/src/lib/api';
 
-const API = 'http://localhost:5000/api';
+const API = API_URL;
 
 export default function AccountPage() {
   const { user, token, isLoggedIn, isLoading, logout, refreshUser } = useAuth();

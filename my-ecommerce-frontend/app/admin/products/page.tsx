@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { API_URL } from '@/src/lib/api';
 
 interface Product {
   _id: string;
@@ -33,7 +34,7 @@ export default function AdminProductsPage() {
   const fetchProducts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch('http://localhost:5000/api/products', {
+      const res = await fetch(`${API_URL}/products`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -89,7 +90,7 @@ export default function AdminProductsPage() {
     data.append('images', imageFile);   // Important: key must match your backend multer
 
     try {
-      const res = await fetch('http://localhost:5000/api/products', {
+      const res = await fetch(`${API_URL}/products`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: data,
@@ -119,7 +120,7 @@ export default function AdminProductsPage() {
 
     const token = localStorage.getItem('token');
     try {
-      await fetch(`http://localhost:5000/api/products/${id}`, {
+      await fetch(`${API_URL}/products/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
