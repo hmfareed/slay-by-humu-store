@@ -11,7 +11,14 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://my-ecommerce-frontend-omega.vercel.app',
+    /\.vercel\.app$/
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
