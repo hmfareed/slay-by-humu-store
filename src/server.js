@@ -41,6 +41,20 @@ const startServer = async () => {
   await connectDB();
   app.listen(PORT, () => {
     console.log(`✅ Server running on http://localhost:${PORT}`);
+
+    // Keep-alive: ping self every 14 minutes to prevent Render free tier sleep
+    if (process.env.NODE_ENV === 'production') {
+      const RENDER_URL = 'https://slay-by-humu-store.onrender.com';
+      setInterval(async () => {
+        try {
+          const res = await fetch(RENDER_URL);
+          console.log(`🏓 Keep-alive ping: ${res.status}`);
+        } catch (err) {
+          console.log('🏓 Keep-alive ping failed:', err.message);
+        }
+      }, 14 * 60 * 1000); // Every 14 minutes
+      console.log('🏓 Keep-alive pinger started (every 14 min)');
+    }
   });
 };
 
