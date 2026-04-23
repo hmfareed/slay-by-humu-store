@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Package, ChevronRight, RefreshCw, Clock, CheckCircle2, Truck, PackageCheck } from 'lucide-react';
+import { ArrowLeft, Package, ChevronRight, RefreshCw, Clock, CheckCircle2, Truck, PackageCheck, X } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useRouter } from 'next/navigation';
@@ -26,13 +25,13 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_STEPS = ['pending', 'paid', 'shipped', 'delivered'];
+const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
-  pending: { label: 'Pending', color: 'text-yellow-600', bg: 'bg-yellow-500/10', icon: Clock },
-  paid: { label: 'Paid', color: 'text-blue-600', bg: 'bg-blue-500/10', icon: CheckCircle2 },
-  shipped: { label: 'Shipped', color: 'text-purple-600', bg: 'bg-purple-500/10', icon: Truck },
-  delivered: { label: 'Delivered', color: 'text-green-600', bg: 'bg-green-500/10', icon: PackageCheck },
-  cancelled: { label: 'Cancelled', color: 'text-red-600', bg: 'bg-red-500/10', icon: Package },
+  pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: Clock },
+  processing: { label: 'Processing', color: 'text-indigo-600', bg: 'bg-indigo-500/10', icon: RefreshCw },
+  shipped: { label: 'Shipped', color: 'text-blue-600', bg: 'bg-blue-500/10', icon: Truck },
+  delivered: { label: 'Delivered', color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: PackageCheck },
+  cancelled: { label: 'Cancelled', color: 'text-rose-600', bg: 'bg-rose-500/10', icon: X },
 };
 
 export default function OrdersPage() {
@@ -44,7 +43,7 @@ export default function OrdersPage() {
   const [error, setError] = useState('');
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [confirmingCancel, setConfirmingCancel] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'ongoing' | 'delivered' | 'cancelled'>('ongoing');
+  const [activeTab, setActiveTab] = useState<'ongoing' | 'shipped' | 'delivered' | 'cancelled'>('ongoing');
 
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -97,7 +96,8 @@ export default function OrdersPage() {
   if (authLoading) return <div className="min-h-screen flex items-center justify-center pb-20"><div className="w-8 h-8 border-2 border-brand-text/10 border-t-brand-accent rounded-full animate-spin" /></div>;
 
   const filteredOrders = orders.filter((o) => {
-    if (activeTab === 'ongoing') return ['pending', 'paid', 'shipped'].includes(o.status);
+    if (activeTab === 'ongoing') return ['pending', 'processing'].includes(o.status);
+    if (activeTab === 'shipped') return o.status === 'shipped';
     if (activeTab === 'delivered') return o.status === 'delivered';
     if (activeTab === 'cancelled') return o.status === 'cancelled';
     return true;
@@ -105,7 +105,7 @@ export default function OrdersPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/account" className="text-brand-muted hover:text-brand-text transition-colors">
@@ -118,14 +118,14 @@ export default function OrdersPage() {
           </button>
         </div>
         <div className="max-w-3xl mx-auto px-4 md:px-8 flex gap-6 overflow-x-auto no-scrollbar">
-          {(['ongoing', 'delivered', 'cancelled'] as const).map((tab) => (
+          {(['ongoing', 'shipped', 'delivered', 'cancelled'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-4 text-sm font-sans font-medium uppercase tracking-widest whitespace-nowrap transition-colors relative ${activeTab === tab ? 'text-brand-accent' : 'text-brand-muted hover:text-brand-text'}`}
             >
               {tab}
-              {activeTab === tab && <motion.div layoutId="orderTab" className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-accent" />}
+              {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-accent" />}
             </button>
           ))}
         </div>
@@ -157,7 +157,7 @@ export default function OrdersPage() {
 
         {/* Empty state */}
         {!loading && !error && filteredOrders.length === 0 && (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
+          <div className="text-center py-20">
             <div className="w-28 h-28 mx-auto mb-8 rounded-full bg-brand-panel border border-brand-text/5 flex items-center justify-center">
               <Package className="w-12 h-12 text-brand-muted" strokeWidth={1} />
             </div>
@@ -168,25 +168,22 @@ export default function OrdersPage() {
             <Link href="/categories" className="btn-gold inline-flex items-center gap-2 px-10 py-3.5 text-sm shadow-soft">
               Continue Shopping
             </Link>
-          </motion.div>
+          </div>
         )}
 
         {/* Orders List */}
         {!loading && !error && filteredOrders.length > 0 && (
           <div className="space-y-4">
-            {filteredOrders.map((order, idx) => {
+            {filteredOrders.map((order) => {
               const config = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
               const StatusIcon = config.icon;
               const isExpanded = expandedOrder === order._id;
               const currentStep = getStepIndex(order.status);
-              const isCancelable = order.status === 'pending' || order.status === 'paid';
+              const isCancelable = order.status === 'pending' || order.status === 'processing';
 
               return (
-                <motion.div
+                <div
                   key={order._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
                   className="bg-brand-panel rounded-2xl border border-brand-text/5 overflow-hidden"
                 >
                   {/* Order Header - clickable */}
@@ -237,7 +234,7 @@ export default function OrdersPage() {
                       
                       {/* Inline Cancel Confirmation */}
                       {confirmingCancel === order._id && (
-                        <div className="animate-in fade-in slide-in-from-right-4 duration-200 flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-2 mt-1">
                           <span className="text-[10px] text-red-500 font-medium">Sure?</span>
                           <button onClick={(e) => { e.stopPropagation(); handleCancelOrder(order._id); }} className="text-[10px] bg-red-500 text-white px-2 py-0.5 rounded shadow hover:bg-red-600">Yes</button>
                           <button onClick={(e) => { e.stopPropagation(); setConfirmingCancel(null); }} className="text-[10px] bg-brand-text/10 px-2 py-0.5 rounded hover:bg-brand-text/20">No</button>
@@ -248,11 +245,7 @@ export default function OrdersPage() {
 
                   {/* Expanded Detail */}
                   {isExpanded && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      className="border-t border-brand-text/5 px-5 py-5"
-                    >
+                    <div className="border-t border-brand-text/5 px-5 py-5">
                       {/* Order ref */}
                       <div className="flex justify-between items-center mb-5">
                         <span className="text-[10px] font-sans uppercase tracking-widest text-brand-muted">Order Ref</span>
@@ -313,9 +306,9 @@ export default function OrdersPage() {
                         {order.shippingAddress.address}, {order.shippingAddress.city}, {order.shippingAddress.country}
                       </div>
 
-                    </motion.div>
+                    </div>
                   )}
-                </motion.div>
+                </div>
               );
             })}
           </div>

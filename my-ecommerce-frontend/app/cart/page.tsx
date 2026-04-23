@@ -65,7 +65,7 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-3xl mx-auto px-4 md:px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-brand-muted hover:text-brand-text transition-colors">
@@ -147,7 +147,7 @@ export default function CartPage() {
                           {item.product.name}
                         </h3>
                         <p className="text-brand-muted text-xs font-sans capitalize mt-0.5">
-                          {item.product.category}
+                          {typeof item.product.category === 'object' ? item.product.category.name : item.product.category}
                         </p>
                       </div>
 

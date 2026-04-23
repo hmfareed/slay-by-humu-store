@@ -18,11 +18,17 @@ export default function CheckoutPage() {
     city: '',
     country: 'Ghana',
     postalCode: '',
+    phoneNumber: '',
   });
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+
+  // Address Autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
@@ -46,6 +52,7 @@ export default function CheckoutPage() {
               city: defaultAddr.city,
               country: 'Ghana',
               postalCode: defaultAddr.gpsAddress || '',
+              phoneNumber: '',
             });
           }
         }
@@ -55,10 +62,52 @@ export default function CheckoutPage() {
   }, [token]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setShippingAddress({
       ...shippingAddress,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    if (name === 'address') {
+      setIsTyping(true);
+      if (value.length > 2) {
+        debouncedFetchSuggestions(value);
+      } else {
+        setAddressSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  // Debounced address search
+  const debouncedFetchSuggestions = (() => {
+    let timeoutId: NodeJS.Timeout;
+    return (query: string) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&countrycodes=gh&limit=5`);
+          const data = await res.json();
+          setAddressSuggestions(data);
+          setShowSuggestions(true);
+        } catch (error) {
+          console.error("Failed to fetch address suggestions:", error);
+        } finally {
+          setIsTyping(false);
+        }
+      }, 500);
+    };
+  })();
+
+  const selectSuggestion = (suggestion: any) => {
+    const city = suggestion.address?.city || suggestion.address?.town || suggestion.address?.village || suggestion.address?.state_district || '';
+    setShippingAddress(prev => ({
+      ...prev,
+      address: suggestion.display_name,
+      city: city
+    }));
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
   };
 
   const handlePlaceOrder = async () => {
@@ -70,8 +119,8 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode) {
-      showNotification('Please fill in all shipping details', 'error');
+    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.phoneNumber) {
+      showNotification('Please fill in all shipping details, including your phone number', 'error');
       return;
     }
 
@@ -116,7 +165,7 @@ export default function CheckoutPage() {
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="bg-brand-panel backdrop-blur-xl p-16 rounded-3xl shadow-soft border border-brand-text/5 text-center max-w-xl mx-auto relative z-10"
+          className="bg-brand-panel  p-16 rounded-3xl shadow-soft border border-brand-text/5 text-center max-w-xl mx-auto relative z-10"
         >
           {/* Subtle Confetti/Glow */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-brand-accent/10 blur-[100px] pointer-events-none" />
@@ -171,7 +220,7 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen overflow-x-hidden">
       {/* Luxury Navbar */}
-      <nav className="sticky top-0 z-50 bg-brand-bg/80 backdrop-blur-xl border-b border-brand-text/5">
+      <nav className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5 flex justify-between items-center">
           <Link href="/" className="text-3xl font-bold tracking-tighter">
             Slay by Humu
@@ -224,6 +273,28 @@ export default function CheckoutPage() {
                   <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
                     Street Address
                   </label>
+
+                  {/* Autocomplete Dropdown */}
+                  <AnimatePresence>
+                    {showSuggestions && addressSuggestions.length > 0 && (
+                      <motion.ul 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute z-50 w-full bg-brand-panel border border-brand-text/10 shadow-soft rounded-2xl mt-2 overflow-hidden max-h-60 overflow-y-auto"
+                      >
+                        {addressSuggestions.map((suggestion, idx) => (
+                          <li 
+                            key={idx}
+                            onClick={() => selectSuggestion(suggestion)}
+                            className="px-4 py-3 hover:bg-brand-text/5 cursor-pointer border-b border-brand-text/5 last:border-0 text-sm font-sans"
+                          >
+                            {suggestion.display_name}
+                          </li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -255,6 +326,21 @@ export default function CheckoutPage() {
                       Postal Code
                     </label>
                   </div>
+                </div>
+
+                <div className="group relative">
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={shippingAddress.phoneNumber}
+                    onChange={handleInputChange}
+                    className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-xl font-light placeholder-transparent"
+                    placeholder="Phone Number"
+                    required
+                  />
+                  <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
+                    Phone Number
+                  </label>
                 </div>
 
                 <div className="pt-4">

@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Menu } from 'lucide-react';
 import ImageLoupe from '@/components/ImageLoupe';
 import MagneticButton from '@/components/MagneticButton';
+import ProductReviews from '@/components/ProductReviews';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
 
@@ -18,7 +19,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
-  category: string;
+  category: string | { name: string; _id: string };
   images: string[];
 }
 
@@ -80,7 +81,7 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
       {/* Luxury Navbar */}
-      <nav className="sticky top-0 z-50 bg-brand-bg/80 backdrop-blur-xl border-b border-brand-text/5">
+      <nav className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <button className="hover:text-brand-accent transition-colors">
@@ -133,12 +134,12 @@ export default function ProductDetailPage() {
               )}
             </AnimatePresence>
             <div className="absolute top-6 left-6 flex gap-2">
-              <span className="bg-brand-panel/80 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-sans font-semibold uppercase tracking-widest border border-brand-text/10 shadow-soft">
+              <span className="bg-brand-panel/80  px-4 py-1.5 rounded-full text-xs font-sans font-semibold uppercase tracking-widest border border-brand-text/10 shadow-soft">
                 100% Raw Hair
               </span>
             </div>
             {/* Instruction tooltip */}
-            <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-brand-panel/80 backdrop-blur-md px-4 py-2 rounded-full border border-brand-text/10 pointer-events-none shadow-soft">
+            <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-brand-panel/80  px-4 py-2 rounded-full border border-brand-text/10 pointer-events-none shadow-soft">
               <svg className="w-4 h-4 text-brand-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" /></svg>
               <span className="text-xs font-sans uppercase tracking-widest font-medium">Hover to Inspect Lace</span>
             </div>
@@ -171,7 +172,7 @@ export default function ProductDetailPage() {
         >
           <div className="mb-4">
             <span className="text-brand-muted text-xs uppercase tracking-[0.3em] font-sans font-semibold">
-              {product.category}
+              {typeof product.category === 'object' ? product.category.name : product.category}
             </span>
           </div>
 
@@ -219,6 +220,9 @@ export default function ProductDetailPage() {
           </div>
         </motion.div>
       </div>
+
+      {/* Customer Reviews Section */}
+      <ProductReviews productId={product._id} />
     </div>
   );
 }

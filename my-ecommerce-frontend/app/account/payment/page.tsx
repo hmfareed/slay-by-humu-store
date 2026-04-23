@@ -1,13 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowLeft, CreditCard, Smartphone } from 'lucide-react';
 
 export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-2xl mx-auto px-4 md:px-8 py-5 flex items-center gap-3">
           <Link href="/account" className="text-brand-muted hover:text-brand-text transition-colors"><ArrowLeft className="w-5 h-5" /></Link>
           <h1 className="text-xl font-serif font-bold tracking-tight">Payment Methods</h1>
@@ -15,7 +14,7 @@ export default function PaymentPage() {
       </header>
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-16">
+        <div className="text-center py-16">
           <div className="w-28 h-28 mx-auto mb-8 rounded-full bg-brand-panel border border-brand-text/5 flex items-center justify-center">
             <CreditCard className="w-12 h-12 text-brand-muted" strokeWidth={1} />
           </div>
@@ -57,7 +56,7 @@ export default function PaymentPage() {
               <span className="ml-auto text-[9px] font-sans font-bold uppercase tracking-widest text-brand-muted bg-brand-text/5 px-2.5 py-1 rounded-full">Soon</span>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { AnimatePresence } from 'framer-motion';
 
 type NotificationType = 'success' | 'error' | 'info';
 
@@ -30,10 +29,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     const id = Math.random().toString(36).substring(2, 9);
     setNotifications((prev) => [...prev, { id, message, type }]);
 
-    // Auto-remove after 5 seconds
+    // Auto-remove after 2 seconds
     setTimeout(() => {
       removeNotification(id);
-    }, 5000);
+    }, 2000);
   }, [removeNotification]);
 
   return (

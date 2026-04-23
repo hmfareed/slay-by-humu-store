@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingBag, Heart, UserCircle } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
-import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
 const tabs = [
@@ -31,7 +30,7 @@ export default function BottomNav() {
   if (shouldHide) return null;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-[80] md:hidden bg-brand-panel/95 backdrop-blur-xl border-t border-brand-text/5 safe-area-bottom">
+    <nav className="fixed bottom-0 left-0 right-0 z-[80] md:hidden bg-brand-panel border-t border-brand-text/5 safe-area-bottom">
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto px-2">
         {tabs.map((tab) => {
           const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href);
@@ -54,13 +53,11 @@ export default function BottomNav() {
                 />
                 {/* Badge */}
                 {mounted && badgeCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center"
+                  <span
+                    className="absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in duration-200"
                   >
                     {badgeCount > 9 ? '9+' : badgeCount}
-                  </motion.span>
+                  </span>
                 )}
               </div>
 
@@ -74,10 +71,8 @@ export default function BottomNav() {
 
               {/* Active indicator dot */}
               {isActive && (
-                <motion.div
-                  layoutId="bottomNavIndicator"
+                <div
                   className="absolute -top-0.5 w-1 h-1 rounded-full bg-brand-accent"
-                  transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
               )}
             </Link>

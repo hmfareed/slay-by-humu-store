@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Moon, Sun, Bell, BellOff, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useTheme } from 'next-themes';
 import { API_URL } from '@/src/lib/api';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const API = API_URL;
 
@@ -59,7 +59,7 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-2xl mx-auto px-4 md:px-8 py-5 flex items-center gap-3">
           <Link href="/account" className="text-brand-muted hover:text-brand-text transition-colors"><ArrowLeft className="w-5 h-5" /></Link>
           <h1 className="text-xl font-serif font-bold tracking-tight">Settings</h1>
@@ -68,7 +68,7 @@ export default function SettingsPage() {
 
       <div className="max-w-2xl mx-auto px-4 md:px-8 py-6 space-y-4">
         {/* Dark Mode Toggle */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+        <div
           className="bg-brand-panel rounded-2xl border border-brand-text/5 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
@@ -79,14 +79,11 @@ export default function SettingsPage() {
               <p className="text-brand-muted text-xs font-sans">Switch between light and dark themes</p>
             </div>
           </div>
-          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className={`relative w-12 h-7 rounded-full transition-colors ${theme === 'dark' ? 'bg-brand-accent' : 'bg-brand-text/10'}`}>
-            <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${theme === 'dark' ? 'translate-x-6' : 'translate-x-1'}`} />
-          </button>
-        </motion.div>
+          <ThemeToggle />
+        </div>
 
         {/* Notifications Toggle */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
+        <div
           className="bg-brand-panel rounded-2xl border border-brand-text/5 px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
@@ -101,10 +98,10 @@ export default function SettingsPage() {
             className={`relative w-12 h-7 rounded-full transition-colors ${notifications ? 'bg-brand-accent' : 'bg-brand-text/10'}`}>
             <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
-        </motion.div>
+        </div>
 
         {/* Change Password */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        <div
           className="bg-brand-panel rounded-2xl border border-brand-text/5 overflow-hidden">
           <button onClick={() => { if (isLoggedIn) setChangingPw(!changingPw); else showNotification('Please login first', 'error'); }}
             className="w-full px-6 py-5 flex items-center justify-between hover:bg-brand-text/[0.02] transition-colors">
@@ -120,7 +117,7 @@ export default function SettingsPage() {
           </button>
 
           {changingPw && (
-            <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} className="px-6 pb-6 space-y-3 border-t border-brand-text/5 pt-4">
+            <div className="px-6 pb-6 space-y-3 border-t border-brand-text/5 pt-4">
               <div className="relative">
                 <input type={showCurrentPw ? 'text' : 'password'} placeholder="Current Password"
                   value={pwForm.currentPassword} onChange={(e) => setPwForm({ ...pwForm, currentPassword: e.target.value })}
@@ -144,9 +141,9 @@ export default function SettingsPage() {
                 className="btn-gold w-full py-3 text-sm disabled:opacity-50">
                 {pwLoading ? 'Updating...' : 'Update Password'}
               </button>
-            </motion.div>
+            </div>
           )}
-        </motion.div>
+        </div>
       </div>
     </div>
   );

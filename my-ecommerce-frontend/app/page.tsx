@@ -6,15 +6,16 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState, useCallback } from 'react';
+import SearchBar from '@/components/SearchBar';
+import QuickViewModal from '@/components/QuickViewModal';
 
 interface Product {
   _id: string;
   name: string;
   description: string;
   price: number;
-  category: string;
+  category: string | { name: string; _id: string };
   images: string[];
 }
 
@@ -32,7 +33,7 @@ export default function HomePage() {
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [heroIndex, setHeroIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
   // Fetch products from API
   useEffect(() => {
@@ -77,21 +78,31 @@ export default function HomePage() {
     window.dispatchEvent(new Event('open-mini-cart'));
   };
 
+  // Helper to safely get category name
+  const getCategoryName = (category: string | { name: string; _id: string }) => {
+    if (!category) return '';
+    if (typeof category === 'object' && category.name) return category.name.toLowerCase();
+    if (typeof category === 'string') return category.toLowerCase();
+    return '';
+  };
+
   // Get unique categories that actually have products
   const activeCategories = HAIR_CATEGORIES.filter((cat) =>
-    products.some((p) => p.category.toLowerCase() === cat.slug)
+    products.some((p) => getCategoryName(p.category) === cat.slug)
   );
 
   // Get products by category
   const getProductsByCategory = (slug: string) =>
-    products.filter((p) => p.category.toLowerCase() === slug);
+    products.filter((p) => getCategoryName(p.category) === slug);
 
   const currentHeroProduct = products[heroIndex];
+
+  if (!mounted) return null;
 
   return (
     <div className="relative font-sans bg-brand-bg text-brand-text min-h-screen">
       {/* ─── HEADER: Logo + Icons ─── */}
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           {/* Top bar */}
           <div className="flex items-center justify-between py-5">
@@ -99,8 +110,8 @@ export default function HomePage() {
               SLAY BY HUMU
             </Link>
 
-            <div className="flex gap-5 items-center">
-              <Link href="/login" className="hover:text-brand-accent transition-colors">
+            <div className="flex items-center gap-6">
+              <Link href="/account" className="hover:text-brand-accent transition-colors">
                 <User className="w-5 h-5" />
               </Link>
               <button onClick={openCart} className="relative hover:text-brand-accent transition-colors">
@@ -111,89 +122,66 @@ export default function HomePage() {
                   </span>
                 )}
               </button>
-              <ThemeToggle />
             </div>
           </div>
 
           {/* Search Bar directly under logo */}
           <div className="pb-5">
-            <div className="relative max-w-xl mx-auto">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search our collection..."
-                className="w-full bg-brand-panel border border-brand-text/10 rounded-full py-3.5 pl-12 pr-6 text-sm font-sans focus:outline-none focus:border-brand-accent focus:ring-2 focus:ring-brand-accent/10 transition-all shadow-sm placeholder:text-brand-muted"
-              />
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-brand-muted" />
-            </div>
+            <SearchBar onSearch={(q) => (window.location.href = `/products?search=${encodeURIComponent(q)}`)} />
           </div>
         </div>
       </header>
 
       {/* ─── HERO SLIDESHOW: Auto-rotating product images every 3s ─── */}
       <section className="relative w-full overflow-hidden bg-brand-panel" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
-        <AnimatePresence mode="wait">
-          {currentHeroProduct && (
-            <motion.div
-              key={currentHeroProduct._id + heroIndex}
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.8, ease: [0.33, 1, 0.68, 1] }}
-              className="absolute inset-0"
-            >
-              <img
-                src={currentHeroProduct.images[0]}
-                alt={currentHeroProduct.name}
-                className="w-full h-full object-cover object-center"
-              />
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        {currentHeroProduct && (
+          <div key={currentHeroProduct._id} className="absolute inset-0">
+            <img
+              src={currentHeroProduct.images[0]}
+              alt={currentHeroProduct.name}
+              className="w-full h-full object-cover object-center"
+            />
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-              {/* Hero text overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
-                <motion.div
-                  initial={{ y: 30, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.6 }}
-                >
-                  <span className="inline-block text-white/70 text-xs font-sans uppercase tracking-[0.3em] mb-3">
-                    {currentHeroProduct.category}
+            {/* Hero text overlay */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
+              <div>
+                <span className="inline-block text-white/70 text-xs font-sans uppercase tracking-[0.3em] mb-3">
+                  {getCategoryName(currentHeroProduct.category)}
+                </span>
+                <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-white tracking-tighter leading-[1.1] mb-4 max-w-lg">
+                  {currentHeroProduct.name}
+                </h2>
+                <div className="flex items-center gap-6">
+                  <span className="text-white/90 text-2xl font-sans font-light">
+                    ₵{currentHeroProduct.price.toFixed(2)}
                   </span>
-                  <h2 className="text-3xl md:text-5xl lg:text-6xl font-serif text-white tracking-tighter leading-[1.1] mb-4 max-w-lg">
-                    {currentHeroProduct.name}
-                  </h2>
-                  <div className="flex items-center gap-6">
-                    <span className="text-white/90 text-2xl font-sans font-light">
-                      ₵{currentHeroProduct.price.toFixed(2)}
-                    </span>
-                    <Link
-                      href={`/products/${currentHeroProduct._id}`}
-                      className="inline-flex items-center gap-2 bg-white text-black font-sans text-xs font-semibold uppercase tracking-[0.15em] px-8 py-3.5 rounded-full hover:bg-brand-accent hover:text-white transition-all duration-300"
-                    >
-                      Shop Now
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </motion.div>
+                  <Link
+                    href={`/products/${currentHeroProduct._id}`}
+                    className="inline-flex items-center gap-2 bg-white text-black font-sans text-xs font-semibold uppercase tracking-[0.15em] px-8 py-3.5 rounded-full hover:bg-brand-accent hover:text-white transition-all duration-300"
+                  >
+                    Shop Now
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        )}
 
         {/* Slide controls */}
         {products.length > 1 && (
           <>
             <button
               onClick={() => goToSlide('prev')}
-              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => goToSlide('next')}
-              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
@@ -218,30 +206,18 @@ export default function HomePage() {
 
       {/* ─── CATEGORY PILLS ─── */}
       <section className="py-10 md:py-14 px-4 md:px-8 lg:px-12 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-10"
-        >
+        <div className="text-center mb-10">
           <h2 className="text-3xl md:text-4xl font-serif tracking-tighter mb-3">Shop by Category</h2>
           <p className="text-brand-muted font-sans font-light text-sm max-w-md mx-auto">
             Browse our curated collections, each crafted with premium raw hair
           </p>
-        </motion.div>
+        </div>
 
         <div className="flex flex-wrap justify-center gap-4 md:gap-6">
-          {activeCategories.map((cat, i) => {
+          {activeCategories.map((cat) => {
             const count = getProductsByCategory(cat.slug).length;
             return (
-              <motion.div
-                key={cat.slug}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-              >
+              <div key={cat.slug}>
                 <Link
                   href={`/products?category=${cat.slug}`}
                   className="group flex flex-col items-center gap-3 p-6 md:p-8 bg-brand-panel border border-brand-text/5 rounded-2xl hover:border-brand-accent/30 hover:shadow-soft transition-all duration-300 min-w-[140px]"
@@ -255,7 +231,7 @@ export default function HomePage() {
                     {count} {count === 1 ? 'piece' : 'pieces'}
                   </span>
                 </Link>
-              </motion.div>
+              </div>
             );
           })}
         </div>
@@ -271,13 +247,7 @@ export default function HomePage() {
             key={cat.slug}
             className="py-12 md:py-16 px-4 md:px-8 lg:px-12 max-w-7xl mx-auto"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-80px' }}
-              transition={{ duration: 0.6 }}
-              className="flex items-end justify-between mb-10"
-            >
+            <div className="flex items-end justify-between mb-10">
               <div>
                 <span className="text-brand-accent text-xs font-sans font-semibold uppercase tracking-[0.3em] mb-2 block">
                   {cat.emoji} {cat.tagline}
@@ -291,17 +261,11 @@ export default function HomePage() {
                 View All
                 <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-            </motion.div>
+            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {catProducts.map((product, idx) => (
-                <motion.div
-                  key={product._id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: '-60px' }}
-                  transition={{ delay: idx * 0.1, duration: 0.6 }}
-                >
+              {catProducts.map((product) => (
+                <div key={product._id}>
                   <Link
                     href={`/products/${product._id}`}
                     className="group block"
@@ -316,13 +280,13 @@ export default function HomePage() {
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
                       {/* Interaction Buttons Overlay */}
                       <div className="absolute flex flex-col md:flex-row bottom-3 left-3 right-3 gap-2 opacity-100 md:opacity-0 translate-y-0 md:translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                        <span className="flex-1 text-center bg-white/90 dark:bg-brand-panel/90 backdrop-blur-md text-brand-text text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm hover:bg-white transition-colors">
+                        <span className="flex-1 text-center bg-white/90 dark:bg-brand-panel/90  text-brand-text text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm hover:bg-white transition-colors">
                           View
                         </span>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
-                            useCartStore.getState().addItem({ ...product, quantity: 1 });
+                            useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
                             window.dispatchEvent(new Event('open-mini-cart'));
                           }}
                           className="flex-1 text-center bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-md hover:bg-amber-600 transition-colors"
@@ -341,7 +305,7 @@ export default function HomePage() {
                       </p>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               ))}
             </div>
 
@@ -365,13 +329,8 @@ export default function HomePage() {
       })}
 
       {/* ─── FOOTER BANNER ─── */}
-      <section className="py-20 md:py-28 px-4 md:px-8 text-center bg-brand-panel border-t border-brand-text/5">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-        >
+      <section className="py-20 md:py-28 px-4 md:px-8 text-center bg-brand-panel border-t border-brand-text/5 mb-16 md:mb-0">
+        <div>
           <h2 className="text-4xl md:text-6xl font-serif tracking-tighter mb-4 text-brand-accent">Slay By Humu.</h2>
           <p className="text-brand-muted font-sans font-light text-lg max-w-lg mx-auto mb-10">
             Premium raw hair collections masterfully crafted for flawless presentation and commanding elegance.
@@ -383,7 +342,7 @@ export default function HomePage() {
             Explore Full Collection
             <ArrowRight className="w-4 h-4" />
           </Link>
-        </motion.div>
+        </div>
 
         {/* Trust Badges */}
         <div className="max-w-3xl mx-auto mt-16 grid grid-cols-3 gap-6 md:gap-12">
@@ -401,6 +360,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* QUICK VIEW MODAL */}
+      <QuickViewModal
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+      />
     </div>
   );
 }

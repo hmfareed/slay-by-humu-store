@@ -42,7 +42,7 @@ export default function WishlistPage() {
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-5xl mx-auto px-4 md:px-8 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-brand-muted hover:text-brand-text transition-colors">
@@ -116,7 +116,7 @@ export default function WishlistPage() {
                     {/* Remove button */}
                     <button
                       onClick={() => handleRemove(product._id, product.name)}
-                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-brand-panel/80 backdrop-blur-sm flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+                      className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-brand-panel/80  flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
                     >
                       <Heart className="w-4 h-4 text-red-500 fill-red-500" />
                     </button>

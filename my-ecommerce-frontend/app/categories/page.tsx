@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Heart, ShoppingBag, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
@@ -107,13 +106,13 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-brand-bg pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-brand-bg/90 backdrop-blur-xl border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/" className="text-brand-muted hover:text-brand-text transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-xl font-serif font-bold tracking-tight">Categories</h1>
+            <h1 className="text-xl font-serif font-bold tracking-tight">Collections</h1>
           </div>
           {/* Mobile filter toggle */}
           <button
@@ -140,75 +139,68 @@ export default function CategoriesPage() {
 
       <div className="max-w-7xl mx-auto flex">
         {/* ─── LEFT SIDEBAR: Category List ─── */}
-        {/* Desktop: always visible. Mobile: toggleable overlay */}
-        <AnimatePresence>
-          {(mobileSidebarOpen || true) && (
-            <motion.aside
-              initial={{ x: -100, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              className={`
-                ${mobileSidebarOpen ? 'fixed inset-0 z-[60] bg-brand-bg/95 backdrop-blur-xl pt-24 px-6' : 'hidden'}
-                md:block md:static md:bg-transparent md:backdrop-blur-none md:pt-0 md:px-0
-                md:w-56 lg:w-64 md:flex-shrink-0 md:border-r md:border-brand-text/5 md:py-6 md:pr-6 md:pl-4
-              `}
+        <aside
+          className={`
+            ${mobileSidebarOpen ? 'fixed inset-0 z-[60] bg-brand-bg/95  pt-24 px-6' : 'hidden'}
+            md:block md:static md:bg-transparent md: md:pt-0 md:px-0
+            md:w-56 lg:w-64 md:flex-shrink-0 md:border-r md:border-brand-text/5 md:py-6 md:pr-6 md:pl-4
+          `}
+        >
+          {/* Mobile close */}
+          {mobileSidebarOpen && (
+            <button
+              onClick={() => setMobileSidebarOpen(false)}
+              className="md:hidden absolute top-5 right-5 text-brand-muted hover:text-brand-text"
             >
-              {/* Mobile close */}
-              {mobileSidebarOpen && (
-                <button
-                  onClick={() => setMobileSidebarOpen(false)}
-                  className="md:hidden absolute top-5 right-5 text-brand-muted hover:text-brand-text"
-                >
-                  ✕
-                </button>
-              )}
+              ✕
+            </button>
+          )}
 
-              <h3 className="text-xs font-sans font-semibold uppercase tracking-[0.2em] text-brand-muted mb-4 md:mb-6">
-                Hair Types
-              </h3>
+          <h3 className="text-xs font-sans font-semibold uppercase tracking-[0.2em] text-brand-muted mb-4 md:mb-6">
+            Hair Types
+          </h3>
 
-              <div className="space-y-1">
-                {/* All */}
+          <div className="space-y-1">
+            {/* All */}
+            <button
+              onClick={() => {
+                setSelectedCategory(null);
+                setMobileSidebarOpen(false);
+              }}
+              className={`w-full text-left px-4 py-3 rounded-xl font-sans text-sm transition-all ${
+                !selectedCategory
+                  ? 'bg-brand-accent/10 text-brand-accent font-semibold border border-brand-accent/20'
+                  : 'text-brand-text hover:bg-brand-panel'
+              }`}
+            >
+              <span className="mr-2">🔥</span> All Pieces
+              <span className="float-right text-brand-muted text-xs">{products.length}</span>
+            </button>
+
+            {categories.map((cat) => {
+              const meta = CATEGORY_META[cat] || { emoji: '💇', tagline: '' };
+              const count = products.filter((p) => p.category.toLowerCase() === cat).length;
+              return (
                 <button
+                  key={cat}
                   onClick={() => {
-                    setSelectedCategory(null);
+                    setSelectedCategory(cat);
                     setMobileSidebarOpen(false);
                   }}
                   className={`w-full text-left px-4 py-3 rounded-xl font-sans text-sm transition-all ${
-                    !selectedCategory
+                    selectedCategory === cat
                       ? 'bg-brand-accent/10 text-brand-accent font-semibold border border-brand-accent/20'
                       : 'text-brand-text hover:bg-brand-panel'
                   }`}
                 >
-                  <span className="mr-2">🔥</span> All Pieces
-                  <span className="float-right text-brand-muted text-xs">{products.length}</span>
+                  <span className="mr-2">{meta.emoji}</span>
+                  <span className="capitalize">{cat}</span>
+                  <span className="float-right text-brand-muted text-xs">{count}</span>
                 </button>
-
-                {categories.map((cat) => {
-                  const meta = CATEGORY_META[cat] || { emoji: '💇', tagline: '' };
-                  const count = products.filter((p) => p.category.toLowerCase() === cat).length;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => {
-                        setSelectedCategory(cat);
-                        setMobileSidebarOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-xl font-sans text-sm transition-all ${
-                        selectedCategory === cat
-                          ? 'bg-brand-accent/10 text-brand-accent font-semibold border border-brand-accent/20'
-                          : 'text-brand-text hover:bg-brand-panel'
-                      }`}
-                    >
-                      <span className="mr-2">{meta.emoji}</span>
-                      <span className="capitalize">{cat}</span>
-                      <span className="float-right text-brand-muted text-xs">{count}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </motion.aside>
-          )}
-        </AnimatePresence>
+              );
+            })}
+          </div>
+        </aside>
 
         {/* ─── RIGHT SECTION: Product Grid ─── */}
         <main className="flex-1 px-4 md:px-8 py-6">
@@ -236,11 +228,8 @@ export default function CategoriesPage() {
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
               {filteredProducts.map((product, idx) => (
-                <motion.div
+                <div
                   key={product._id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: Math.min(idx * 0.05, 0.4), duration: 0.4 }}
                   className="group"
                 >
                   <Link href={`/products/${product._id}`} className="block">
@@ -258,7 +247,7 @@ export default function CategoriesPage() {
                           e.stopPropagation();
                           toggleWishlist(product);
                         }}
-                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-brand-panel/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
+                        className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 dark:bg-brand-panel/80  flex items-center justify-center transition-all hover:scale-110"
                       >
                         <Heart
                           className={`w-4 h-4 transition-colors ${
@@ -285,7 +274,7 @@ export default function CategoriesPage() {
                     </h3>
                     <p className="text-brand-accent font-semibold text-sm">₵{product.price.toFixed(2)}</p>
                   </div>
-                </motion.div>
+                </div>
               ))}
             </div>
           )}

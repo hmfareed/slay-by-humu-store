@@ -37,7 +37,7 @@ export default function ImageLoupe({ src, alt }: { src: string; alt: string; }) 
       {/* Loupe glass circle effect */}
       {showLoupe && (
         <div 
-          className="absolute pointer-events-none w-48 h-48 border border-brand-accent/30 rounded-full shadow-2xl backdrop-blur-none z-20"
+          className="absolute pointer-events-none w-48 h-48 border border-brand-accent/30 rounded-full shadow-2xl  z-20"
           style={{
             left: `calc(${pos.x}% - 6rem)`,
             top: `calc(${pos.y}% - 6rem)`,

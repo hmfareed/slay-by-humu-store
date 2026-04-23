@@ -1,10 +1,11 @@
 const Order = require('../models/Order');
 const Cart = require('../models/Cart');
+const { createNotification } = require('./notificationController');
 
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { shippingAddress } = req.body;
+    const { shippingAddress, paymentMethod } = req.body;
 
     const cart = await Cart.findOne({ user: userId }).populate('items.product');
 
@@ -34,7 +35,8 @@ const createOrder = async (req, res) => {
       user: userId,
       items: orderItems,
       totalAmount,
-      shippingAddress
+      shippingAddress,
+      paymentMethod: paymentMethod || 'Cash on Delivery',
     });
 
     // Clear cart
@@ -61,9 +63,17 @@ const getMyOrders = async (req, res) => {
 // GET /api/orders/:id — Get single order
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findOne({ _id: req.params.id, user: req.user.id })
-      .populate('items.product');
+    const order = await Order.findById(req.params.id)
+      .populate('items.product')
+      .populate('user', 'name email phone');
+    
     if (!order) return res.status(404).json({ message: 'Order not found' });
+    
+    // Allow admin or order owner to view
+    if (order.user._id.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -74,28 +84,69 @@ const getOrderById = async (req, res) => {
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['pending', 'paid', 'shipped', 'delivered', 'cancelled'];
-    if (!validStatuses.includes(status)) {
+    // Normalize to lowercase for DB storage
+    const normalizedStatus = status.toLowerCase();
+    const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+    if (!validStatuses.includes(normalizedStatus)) {
       return res.status(400).json({ message: `Invalid status. Must be: ${validStatuses.join(', ')}` });
     }
 
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Order not found' });
 
-    order.status = status;
+    order.status = normalizedStatus;
+    
+    // Auto-update payment status when delivered
+    if (normalizedStatus === 'delivered') {
+      order.paymentStatus = 'paid';
+    }
+    
     await order.save();
 
-    res.json({ message: `Order status updated to ${status}`, order });
+    // Fetch the populated order specifically for the notification string
+    const populatedOrder = await Order.findById(req.params.id).populate('items.product', 'name');
+
+    // Generate detailed item string for notification
+    const itemNames = populatedOrder.items
+      .map(item => item.product ? item.product.name : 'Unknown Item')
+      .join(', ');
+
+    // Trigger detailed notification
+    await createNotification(
+      order.user,
+      `Order ${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}`,
+      `Great news! Your order containing [${itemNames}] has been marked as ${normalizedStatus}. We'll keep you posted on the progress.`,
+      'order',
+      req.app.get('io')
+    );
+
+    res.json({ message: `Order status updated to ${normalizedStatus}`, order });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-// GET /api/orders/all — Admin: Get all orders
+// GET /api/orders/all — Admin: Get all orders with filters
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find()
-      .populate('user', 'name email')
+    const { status, paymentStatus, fromDate, toDate } = req.query;
+    
+    const filter = {};
+    
+    if (status && status !== 'all') {
+      filter.status = status.toLowerCase();
+    }
+    if (paymentStatus && paymentStatus !== 'all') {
+      filter.paymentStatus = paymentStatus.toLowerCase();
+    }
+    if (fromDate || toDate) {
+      filter.createdAt = {};
+      if (fromDate) filter.createdAt.$gte = new Date(fromDate);
+      if (toDate) filter.createdAt.$lte = new Date(toDate + 'T23:59:59.999Z');
+    }
+
+    const orders = await Order.find(filter)
+      .populate('user', 'name email phone')
       .populate('items.product')
       .sort({ createdAt: -1 });
     res.json(orders);
@@ -119,8 +170,8 @@ const cancelOrder = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to perform this operation' });
     }
 
-    // Only allow cancellation if pending or paid
-    if (order.status !== 'pending' && order.status !== 'paid') {
+    // Only allow cancellation if pending or processing
+    if (order.status !== 'pending' && order.status !== 'processing') {
       return res.status(400).json({ message: `Cannot cancel an order that is ${order.status}` });
     }
 

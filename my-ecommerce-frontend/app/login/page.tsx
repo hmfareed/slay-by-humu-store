@@ -24,6 +24,7 @@ export default function LoginPage() {
     name: '',
     email: '',
     password: '',
+    phone: '',
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -42,9 +43,10 @@ export default function LoginPage() {
       showNotification('Please enter a valid email address.', 'error');
       return;
     }
-    // Block common typos
-    if (emailStr.endsWith('@gmail.co') || emailStr.endsWith('@yahoo.co') || emailStr.endsWith('@hotmail.co')) {
-      showNotification('Invalid email domain. Did you mean .com?', 'error');
+
+    // Phone validation for registration
+    if (!isLogin && (!formData.phone || formData.phone.length < 8)) {
+      showNotification('Please enter a valid phone number.', 'error');
       return;
     }
 
@@ -68,13 +70,11 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        // Only wipe cart/wishlist on fresh registration so we don't accidentally wipe a guest cart before login
         if (!isLogin) {
           clearCart();
           clearWishlist();
         }
 
-        // Sync with global auth context
         login(data.token, { _id: data._id, name: data.name, email: data.email, role: data.role || 'user' });
         showNotification(isLogin ? 'Login successful! Redirecting...' : 'Account created successfully!', 'success');
         
@@ -93,25 +93,19 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen overflow-x-hidden flex flex-col">
-      {/* Luxury Navbar */}
-      <nav className="sticky top-0 z-50 bg-brand-bg/80 backdrop-blur-xl border-b border-brand-text/5">
+      <nav className="sticky top-0 z-50 bg-brand-bg border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5 flex justify-between items-center">
           <Link href="/" className="text-3xl font-bold tracking-tighter">
-            Slay by Humu
-            <span className="text-brand-accent">.</span>
+            Slay by Humu<span className="text-brand-accent">.</span>
           </Link>
-          
-          <div className="flex gap-6 md:gap-10 text-[15px] font-sans font-medium tracking-wide items-center">
+          <div className="flex gap-6 md:gap-10 text-[15px] font-sans font-medium items-center">
             <Link href="/" className="hover:text-brand-accent transition-colors hidden md:block">Home</Link>
             <Link href="/products" className="hover:text-brand-accent transition-colors">Shop</Link>
-            <Link href="/cart" className="hover:text-brand-accent transition-colors hidden md:block">Cart</Link>
-            <Link href="/login" className="text-brand-accent hidden md:block">Account</Link>
             <ThemeToggle />
           </div>
         </div>
       </nav>
 
-      {/* Auth Content */}
       <div className="flex-1 flex items-center justify-center py-20 px-4 relative">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-brand-accent/5 rounded-full blur-[150px] pointer-events-none -z-10" />
 
@@ -127,13 +121,13 @@ export default function LoginPage() {
 
           <div className="flex justify-center gap-4 mb-10 p-1 bg-brand-text/5 rounded-full font-sans">
             <button
-              onClick={() => { setIsLogin(true); }}
+              onClick={() => setIsLogin(true)}
               className={`flex-1 py-3 rounded-full text-sm font-medium transition-all ${isLogin ? 'bg-brand-panel shadow-soft text-brand-text' : 'text-brand-muted hover:text-brand-text'}`}
             >
               Login
             </button>
             <button
-              onClick={() => { setIsLogin(false); }}
+              onClick={() => setIsLogin(false)}
               className={`flex-1 py-3 rounded-full text-sm font-medium transition-all ${!isLogin ? 'bg-brand-panel shadow-soft text-brand-text' : 'text-brand-muted hover:text-brand-text'}`}
             >
               Register
@@ -143,25 +137,47 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit} className="space-y-8 font-sans">
             <AnimatePresence mode="popLayout">
               {!isLogin && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  className="group relative"
-                >
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
-                    placeholder="Full Name"
-                  />
-                  <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                    Full Name
-                  </label>
-                </motion.div>
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="group relative"
+                  >
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
+                      placeholder="Full Name"
+                    />
+                    <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
+                      Full Name
+                    </label>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="group relative"
+                  >
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      required
+                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
+                      placeholder="Phone Number"
+                    />
+                    <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
+                      Phone Number
+                    </label>
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
 
@@ -209,11 +225,10 @@ export default function LoginPage() {
             </button>
           </form>
 
-
           <p className="text-center mt-10 text-brand-muted font-sans font-light text-sm">
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button 
-              onClick={() => { setIsLogin(!isLogin); }}
+              onClick={() => setIsLogin(!isLogin)}
               className="text-brand-text font-medium hover:text-brand-accent transition-colors ml-1"
             >
               {isLogin ? 'Register' : 'Login'}

@@ -11,7 +11,7 @@ interface CartItem {
     name: string;
     price: number;
     images: string[];
-    category?: string;
+    category?: string | { name: string; _id: string };
     description?: string;
   };
   quantity: number;
@@ -19,7 +19,7 @@ interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  addItem: (product: any) => Promise<void>;
+  addItem: (product: { _id: string; name: string; price: number; images: string[]; category?: string | { name: string; _id: string }; description?: string; quantity?: number }) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
   clearCart: () => void;
   getTotalItems: () => number;
