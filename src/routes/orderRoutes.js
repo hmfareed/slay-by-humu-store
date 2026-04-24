@@ -1,10 +1,10 @@
 const express = require('express');
 const { createOrder, getMyOrders, getOrderById, updateOrderStatus, getAllOrders, cancelOrder, deleteAllOrders } = require('../controllers/orderController');
-const { protect, isAdmin } = require('../middleware/auth');
+const { protect, isAdmin, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/', createOrder);
+router.post('/', optionalAuth, createOrder);
 
 router.use(protect);
 

@@ -12,6 +12,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const paystackRoutes = require('./routes/paystackRoutes');
 const app = express();
 
 // Middleware
@@ -25,6 +26,10 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+// Paystack webhook MUST be registered before express.json() to receive raw body
+app.use('/api/payments/webhook', require('./routes/paystackRoutes'));
+
 app.use(express.json());
 
 // Routes
@@ -38,6 +43,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/payments', paystackRoutes);
 
 
 // Test route

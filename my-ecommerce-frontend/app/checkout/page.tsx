@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useAuth } from '@/src/context/AuthContext';
 import { API_URL } from '@/src/lib/api';
+import PaystackButton from '@/components/PaystackButton';
 
 export default function CheckoutPage() {
   const { showNotification } = useNotification();
@@ -23,6 +24,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [paystackOrderId, setPaystackOrderId] = useState(''); // set when order is created for Paystack
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
   // Payment State
@@ -178,6 +180,52 @@ export default function CheckoutPage() {
     } catch (error) {
       console.error('Order error:', error);
       showNotification('Failed to place order. Please try again.', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Separate flow: create order first, then redirect to Paystack
+  const handlePlaceOrderForPaystack = async () => {
+    if (cartItems.length === 0) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      showNotification('You must be logged in to pay with Paystack', 'error');
+      return;
+    }
+
+    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.phoneNumber) {
+      showNotification('Please fill in all shipping details, including your phone number', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          shippingAddress,
+          paymentMethod: 'Paystack',
+          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity, price: item.product.price }))
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Order created — now show the Paystack button
+        setPaystackOrderId(data.order._id);
+        showNotification('Order created! Proceeding to payment...', 'info');
+      } else {
+        showNotification(data.message || 'Failed to create order', 'error');
+      }
+    } catch (error) {
+      showNotification('Network error. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -496,6 +544,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
+              {/* Mobile Money Order Button */}
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
@@ -507,10 +556,41 @@ export default function CheckoutPage() {
                     Processing...
                   </span>
                 ) : (
-                  <span className="relative z-10">Complete Purchase</span>
+                  <span className="relative z-10">Pay with Mobile Money</span>
                 )}
                 <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
               </button>
+
+              {/* Divider */}
+              <div className="flex items-center gap-3 my-2">
+                <div className="flex-1 h-px bg-brand-text/10" />
+                <span className="text-xs text-brand-muted font-sans uppercase tracking-widest">or pay securely with</span>
+                <div className="flex-1 h-px bg-brand-text/10" />
+              </div>
+
+              {/* Paystack Card/Bank Payment */}
+              {paystackOrderId ? (
+                <PaystackButton
+                  orderId={paystackOrderId}
+                  amount={totalPrice}
+                  onError={(msg) => showNotification(msg, 'error')}
+                />
+              ) : (
+                <button
+                  onClick={handlePlaceOrderForPaystack}
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-3 bg-[#0BA4DB] hover:bg-[#0993c7] text-white font-sans font-bold text-sm uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-[#0BA4DB]/20 transition-all disabled:opacity-60"
+                >
+                  {loading ? (
+                    <>
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Creating order...
+                    </>
+                  ) : (
+                    <>💳 Pay with Card / Bank (Paystack)</>
+                  )}
+                </button>
+              )}
 
               <div className="mt-8 flex justify-center items-center gap-3 text-brand-muted text-xs font-sans">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>

@@ -3,8 +3,7 @@ const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema({
   user: { 
     type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+    ref: 'User' 
   },
   items: [{
     product: { 
@@ -39,6 +38,10 @@ const orderSchema = new mongoose.Schema({
     country: { type: String, required: true },
     postalCode: { type: String, required: true },
     phoneNumber: { type: String, required: false }
+  },
+  paystackReference: {
+    type: String,
+    default: null
   }
 }, { timestamps: true });
 
