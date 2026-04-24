@@ -9,7 +9,6 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useAuth } from '@/src/context/AuthContext';
 import { API_URL } from '@/src/lib/api';
-import PaystackButton from '@/components/PaystackButton';
 
 export default function CheckoutPage() {
   const { showNotification } = useNotification();
@@ -27,9 +26,7 @@ export default function CheckoutPage() {
   const [paystackOrderId, setPaystackOrderId] = useState(''); // set when order is created for Paystack
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
-  // Payment State
-  const [paymentNetwork, setPaymentNetwork] = useState('');
-  const [paymentNumber, setPaymentNumber] = useState('');
+  // (Removed manual Mobile Money state)
 
   // Address Autocomplete state
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
@@ -116,82 +113,15 @@ export default function CheckoutPage() {
     setAddressSuggestions([]);
   };
 
-  const handlePaymentNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const num = e.target.value.replace(/\D/g, ''); // only digits
-    setPaymentNumber(num);
-    
-    if (num.length >= 3) {
-      const prefix = num.substring(0, 3);
-      if (['059', '024', '055', '025', '054'].includes(prefix)) {
-        setPaymentNetwork('MTN MOMO');
-      } else if (['020', '050'].includes(prefix)) {
-        setPaymentNetwork('Telecel Cash');
-      } else if (['026', '056'].includes(prefix)) {
-        setPaymentNetwork('AirtelTigo Cash');
-      }
-    }
-  };
+  // Handle address input and autocomplete...
+  // (Manual Mobile Money handler removed)
 
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
-    if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.phoneNumber) {
-      showNotification('Please fill in all shipping details, including your phone number', 'error');
-      return;
-    }
-
-    if (!paymentNetwork || !paymentNumber) {
-      showNotification('Please select a payment network and enter your mobile money number', 'error');
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const headers: any = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      const res = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          shippingAddress,
-          paymentMethod: `${paymentNetwork} (${paymentNumber})`,
-          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity, price: item.product.price }))
-        }),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setOrderSuccess(true);
-        setOrderId(data.order?._id || 'unknown');
-        clearCart(); // Clear local cart
-        showNotification('Order placed successfully', 'success');
-      } else {
-        showNotification(data.message || 'Failed to place order', 'error');
-      }
-    } catch (error) {
-      console.error('Order error:', error);
-      showNotification('Failed to place order. Please try again.', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Separate flow: create order first, then redirect to Paystack
-  const handlePlaceOrderForPaystack = async () => {
-    if (cartItems.length === 0) return;
-
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
-      showNotification('You must be logged in to pay with Paystack', 'error');
+      showNotification('You must be logged in to checkout', 'error');
       return;
     }
 
@@ -201,8 +131,10 @@ export default function CheckoutPage() {
     }
 
     setLoading(true);
+
     try {
-      const res = await fetch(`${API_URL}/orders`, {
+      // 1. Create the order
+      const orderRes = await fetch(`${API_URL}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -215,18 +147,39 @@ export default function CheckoutPage() {
         }),
       });
 
-      const data = await res.json();
+      const orderData = await orderRes.json();
 
-      if (res.ok) {
-        // Order created — now show the Paystack button
-        setPaystackOrderId(data.order._id);
-        showNotification('Order created! Proceeding to payment...', 'info');
-      } else {
-        showNotification(data.message || 'Failed to create order', 'error');
+      if (!orderRes.ok) {
+        showNotification(orderData.message || 'Failed to create order', 'error');
+        setLoading(false);
+        return;
       }
+
+      // 2. Initialize Paystack payment
+      const paystackRes = await fetch(`${API_URL}/payments/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ orderId: orderData.order._id }),
+      });
+
+      const paystackData = await paystackRes.json();
+
+      if (!paystackRes.ok) {
+        showNotification(paystackData.message || 'Failed to initialize payment', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // 3. Clear cart and redirect to Paystack
+      clearCart();
+      window.location.href = paystackData.authorization_url;
+
     } catch (error) {
+      console.error('Order error:', error);
       showNotification('Network error. Please try again.', 'error');
-    } finally {
       setLoading(false);
     }
   };
@@ -463,47 +416,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Payment Details */}
-                <div className="pt-8 mt-8 border-t border-brand-text/10">
-                  <h3 className="text-2xl font-bold mb-8 tracking-tight">Payment Details</h3>
-                  
-                  <div className="space-y-8">
-                    <div>
-                      <label className="block text-xs font-medium mb-4 tracking-widest uppercase text-brand-muted">Select Network</label>
-                      <div className="grid grid-cols-3 gap-3 md:gap-4">
-                        {['MTN MOMO', 'Telecel Cash', 'AirtelTigo Cash'].map((net) => (
-                          <button
-                            key={net}
-                            type="button"
-                            onClick={() => setPaymentNetwork(net)}
-                            className={`py-3 px-2 rounded-xl border text-xs sm:text-sm font-medium transition-all ${
-                              paymentNetwork === net 
-                                ? 'bg-[#a47b38] border-[#a47b38] text-white shadow-md' 
-                                : 'bg-brand-bg border-brand-text/10 hover:border-brand-accent/50 text-brand-text/80'
-                            }`}
-                          >
-                            {net.replace(' Cash', '')}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-2 mt-10">
-                      <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
-                        Mobile Money Number
-                      </label>
-                      <input
-                        type="tel"
-                        value={paymentNumber}
-                        onChange={handlePaymentNumberChange}
-                        maxLength={10}
-                        className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
-                        placeholder="e.g. 0240000000"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
+                {/* Manual Payment Section Removed */}
               </div>
             </motion.div>
           </div>
@@ -544,7 +457,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Mobile Money Order Button */}
+              {/* Combined Payment Button */}
               <button
                 onClick={handlePlaceOrder}
                 disabled={loading}
@@ -553,44 +466,16 @@ export default function CheckoutPage() {
                 {loading ? (
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    Processing...
+                    Connecting to Payment...
                   </span>
                 ) : (
-                  <span className="relative z-10">Pay with Mobile Money</span>
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Proceed to Payment
+                  </span>
                 )}
                 <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
               </button>
-
-              {/* Divider */}
-              <div className="flex items-center gap-3 my-2">
-                <div className="flex-1 h-px bg-brand-text/10" />
-                <span className="text-xs text-brand-muted font-sans uppercase tracking-widest">or pay securely with</span>
-                <div className="flex-1 h-px bg-brand-text/10" />
-              </div>
-
-              {/* Paystack Card/Bank Payment */}
-              {paystackOrderId ? (
-                <PaystackButton
-                  orderId={paystackOrderId}
-                  amount={totalPrice}
-                  onError={(msg) => showNotification(msg, 'error')}
-                />
-              ) : (
-                <button
-                  onClick={handlePlaceOrderForPaystack}
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-3 bg-[#0BA4DB] hover:bg-[#0993c7] text-white font-sans font-bold text-sm uppercase tracking-widest py-4 rounded-2xl shadow-lg shadow-[#0BA4DB]/20 transition-all disabled:opacity-60"
-                >
-                  {loading ? (
-                    <>
-                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      Creating order...
-                    </>
-                  ) : (
-                    <>💳 Pay with Card / Bank (Paystack)</>
-                  )}
-                </button>
-              )}
 
               <div className="mt-8 flex justify-center items-center gap-3 text-brand-muted text-xs font-sans">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
