@@ -6,6 +6,7 @@ import { useCartStore } from '@/src/store/cartStore';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/src/context/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { ShoppingBag, User, Menu } from 'lucide-react';
 import ImageLoupe from '@/components/ImageLoupe';
@@ -27,6 +28,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { showNotification } = useNotification();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -41,6 +43,32 @@ export default function ProductDetailPage() {
         if (!res.ok) throw new Error('Failed to fetch product');
         const data = await res.json();
         setProduct(data);
+        
+        // Save to recently viewed
+        try {
+          const key = `recent_products_${user ? user._id : 'guest'}`;
+          const recent = JSON.parse(localStorage.getItem(key) || '[]');
+          const productSummary = {
+            _id: data._id,
+            name: data.name,
+            price: data.price,
+            image: data.images?.[0] || '',
+            category: typeof data.category === 'object' ? data.category.name : data.category
+          };
+          
+          // Remove if already exists to put it at the top
+          const filteredRecent = recent.filter((p: any) => p._id !== data._id);
+          filteredRecent.unshift(productSummary);
+          
+          // Keep only last 12
+          if (filteredRecent.length > 12) {
+            filteredRecent.length = 12;
+          }
+          
+          localStorage.setItem(key, JSON.stringify(filteredRecent));
+        } catch (e) {
+          console.error('Failed to save recently viewed', e);
+        }
       } catch (err: any) {
         setError(err.message);
       } finally {

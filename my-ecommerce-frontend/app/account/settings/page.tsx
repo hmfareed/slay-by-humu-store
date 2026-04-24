@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Moon, Sun, Bell, BellOff, Lock, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Moon, Sun, Bell, BellOff, Lock, Eye, EyeOff, Globe } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
+import { useLanguage } from '@/src/context/LanguageContext';
 import { useTheme } from 'next-themes';
 import { API_URL } from '@/src/lib/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -15,6 +16,7 @@ export default function SettingsPage() {
   const { token, isLoggedIn } = useAuth();
   const { showNotification } = useNotification();
   const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
 
   const [notifications, setNotifications] = useState(true);
   const [changingPw, setChangingPw] = useState(false);
@@ -62,7 +64,7 @@ export default function SettingsPage() {
       <header className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-2xl mx-auto px-4 md:px-8 py-5 flex items-center gap-3">
           <Link href="/account" className="text-brand-muted hover:text-brand-text transition-colors"><ArrowLeft className="w-5 h-5" /></Link>
-          <h1 className="text-xl font-serif font-bold tracking-tight">Settings</h1>
+          <h1 className="text-xl font-serif font-bold tracking-tight">{t('settings.title')}</h1>
         </div>
       </header>
 
@@ -75,8 +77,8 @@ export default function SettingsPage() {
               {theme === 'dark' ? <Moon className="w-5 h-5 text-brand-accent" /> : <Sun className="w-5 h-5 text-brand-accent" />}
             </div>
             <div>
-              <p className="font-sans font-medium text-sm">Dark Mode</p>
-              <p className="text-brand-muted text-xs font-sans">Switch between light and dark themes</p>
+              <p className="font-sans font-medium text-sm">{t('settings.darkMode')}</p>
+              <p className="text-brand-muted text-xs font-sans">{t('settings.darkModeDesc')}</p>
             </div>
           </div>
           <ThemeToggle />
@@ -90,14 +92,47 @@ export default function SettingsPage() {
               {notifications ? <Bell className="w-5 h-5 text-brand-accent" /> : <BellOff className="w-5 h-5 text-brand-muted" />}
             </div>
             <div>
-              <p className="font-sans font-medium text-sm">Notifications</p>
-              <p className="text-brand-muted text-xs font-sans">Order updates and promotions</p>
+              <p className="font-sans font-medium text-sm">{t('settings.notifications')}</p>
+              <p className="text-brand-muted text-xs font-sans">{t('settings.notificationsDesc')}</p>
             </div>
           </div>
-          <button onClick={() => { setNotifications(!notifications); showNotification(notifications ? 'Notifications off' : 'Notifications on', 'info'); }}
-            className={`relative w-12 h-7 rounded-full transition-colors ${notifications ? 'bg-brand-accent' : 'bg-brand-text/10'}`}>
-            <span className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${notifications ? 'translate-x-6' : 'translate-x-1'}`} />
+          <button 
+            onClick={() => { setNotifications(!notifications); showNotification(notifications ? 'Notifications off' : 'Notifications on', 'info'); }}
+            className={`relative flex items-center w-12 h-6 rounded-full transition-colors duration-300 focus:outline-none ${notifications ? 'bg-brand-panel border border-brand-text/10' : 'bg-black/10'}`}
+          >
+            <span className={`absolute w-5 h-5 bg-brand-text rounded-full shadow transition-transform duration-300 ${notifications ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
+        </div>
+
+        {/* Language Selection */}
+        <div className="bg-brand-panel rounded-2xl border border-brand-text/5 px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center">
+              <Globe className="w-5 h-5 text-brand-accent" />
+            </div>
+            <div>
+              <p className="font-sans font-medium text-sm">{t('settings.language')}</p>
+              <p className="text-brand-muted text-xs font-sans">{t('settings.languageDesc')}</p>
+            </div>
+          </div>
+          <div className="relative">
+            <select
+              value={language}
+              onChange={(e) => {
+                setLanguage(e.target.value as any);
+                showNotification('Language updated', 'success');
+              }}
+              className="pl-4 pr-8 py-2 bg-brand-bg border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-sm font-medium rounded-xl appearance-none"
+            >
+              <option value="en">English</option>
+              <option value="fr">French</option>
+              <option value="sw">Swahili</option>
+              <option value="pt">Portuguese</option>
+            </select>
+            <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-brand-muted">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
         </div>
 
         {/* Change Password */}
@@ -110,8 +145,8 @@ export default function SettingsPage() {
                 <Lock className="w-5 h-5 text-brand-accent" />
               </div>
               <div className="text-left">
-                <p className="font-sans font-medium text-sm">Change Password</p>
-                <p className="text-brand-muted text-xs font-sans">Update your account password</p>
+                <p className="font-sans font-medium text-sm">{t('settings.changePassword')}</p>
+                <p className="text-brand-muted text-xs font-sans">{t('settings.changePasswordDesc')}</p>
               </div>
             </div>
           </button>

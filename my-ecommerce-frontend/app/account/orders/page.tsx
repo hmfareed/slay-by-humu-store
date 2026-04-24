@@ -25,12 +25,13 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
+const STATUS_STEPS = ['pending', 'processing', 'shipped', 'picked_up', 'delivered'];
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: any }> = {
   pending: { label: 'Pending', color: 'text-amber-600', bg: 'bg-amber-500/10', icon: Clock },
   processing: { label: 'Processing', color: 'text-indigo-600', bg: 'bg-indigo-500/10', icon: RefreshCw },
   shipped: { label: 'Shipped', color: 'text-blue-600', bg: 'bg-blue-500/10', icon: Truck },
-  delivered: { label: 'Delivered', color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: PackageCheck },
+  picked_up: { label: 'Picked Up', color: 'text-white', bg: 'bg-emerald-600', icon: PackageCheck },
+  delivered: { label: 'Delivered', color: 'text-emerald-600', bg: 'bg-emerald-500/10', icon: CheckCircle2 },
   cancelled: { label: 'Cancelled', color: 'text-rose-600', bg: 'bg-rose-500/10', icon: X },
 };
 
@@ -98,7 +99,7 @@ export default function OrdersPage() {
   const filteredOrders = orders.filter((o) => {
     if (activeTab === 'ongoing') return ['pending', 'processing'].includes(o.status);
     if (activeTab === 'shipped') return o.status === 'shipped';
-    if (activeTab === 'delivered') return o.status === 'delivered';
+    if (activeTab === 'delivered') return ['delivered', 'picked_up'].includes(o.status);
     if (activeTab === 'cancelled') return o.status === 'cancelled';
     return true;
   });
@@ -118,16 +119,27 @@ export default function OrdersPage() {
           </button>
         </div>
         <div className="max-w-3xl mx-auto px-4 md:px-8 flex gap-6 overflow-x-auto no-scrollbar">
-          {(['ongoing', 'shipped', 'delivered', 'cancelled'] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`pb-4 text-sm font-sans font-medium uppercase tracking-widest whitespace-nowrap transition-colors relative ${activeTab === tab ? 'text-brand-accent' : 'text-brand-muted hover:text-brand-text'}`}
-            >
-              {tab}
-              {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-accent" />}
-            </button>
-          ))}
+          {(['ongoing', 'shipped', 'delivered', 'cancelled'] as const).map((tab) => {
+            let countStr = '';
+            if (tab === 'ongoing') {
+              const count = orders.filter(o => ['pending', 'processing'].includes(o.status)).length;
+              if (count > 0) countStr = ` (${count})`;
+            } else if (tab === 'shipped') {
+              const count = orders.filter(o => o.status === 'shipped').length;
+              if (count > 0) countStr = ` (${count})`;
+            }
+
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`pb-4 text-sm font-sans font-medium uppercase tracking-widest whitespace-nowrap transition-colors relative ${activeTab === tab ? 'text-brand-accent' : 'text-brand-muted hover:text-brand-text'}`}
+              >
+                {tab}{countStr}
+                {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-brand-accent" />}
+              </button>
+            );
+          })}
         </div>
       </header>
 

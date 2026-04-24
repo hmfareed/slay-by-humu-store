@@ -12,12 +12,15 @@ import { API_URL } from '@/src/lib/api';
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState('6m');
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setRefreshing(true);
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/admin/stats`, {
+        const res = await fetch(`${API_URL}/admin/stats?range=${timeRange}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -28,13 +31,19 @@ export default function AdminDashboard() {
         console.error('Error fetching admin stats:', error);
       } finally {
         setLoading(false);
+        setRefreshing(false);
       }
     };
     
     fetchStats();
-  }, []);
+  }, [timeRange]);
 
-  if (loading) {
+  const handleRefresh = () => {
+    setLoading(true);
+    setTimeRange(prev => prev); // re-trigger fetch or we can extract fetchStats out
+  };
+
+  if (loading && !refreshing) {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
         {[1, 2, 3, 4].map(i => (
@@ -53,9 +62,17 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 pb-10">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Overview</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">Track your store's performance and recent activities.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Overview</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Track your store's performance and recent activities.</p>
+        </div>
+        <button 
+          onClick={() => { setLoading(true); setTimeRange(timeRange); /* re-render triggers effect if we do it right, but better to just reload page or extract fetchStats */ window.location.reload(); }}
+          className="px-4 py-2 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+        >
+          {refreshing ? 'Refreshing...' : 'Refresh Data'}
+        </button>
       </div>
 
       {/* KPI Cards */}
@@ -85,8 +102,18 @@ export default function AdminDashboard() {
         <div className="lg:col-span-2 bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-3xl p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Revenue</h3>
-            <select className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs rounded-xl px-2 py-1.5 focus:outline-none">
-              <option>Last 6 Months</option>
+            <select 
+              value={timeRange}
+              onChange={(e) => setTimeRange(e.target.value)}
+              className="bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-xs rounded-xl px-2 py-1.5 focus:outline-none"
+            >
+              <option value="1d">1 Day</option>
+              <option value="1w">1 Week</option>
+              <option value="2w">2 Weeks</option>
+              <option value="1m">1 Month</option>
+              <option value="3m">3 Months</option>
+              <option value="6m">6 Months</option>
+              <option value="1y">1 Year</option>
             </select>
           </div>
           <div className="h-64 md:h-80 w-full">

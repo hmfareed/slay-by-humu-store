@@ -3,12 +3,13 @@
 
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
+import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight, Package, Sparkles, ShieldCheck } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
 import { useEffect, useState, useCallback } from 'react';
 import SearchBar from '@/components/SearchBar';
 import QuickViewModal from '@/components/QuickViewModal';
+import Footer from '@/components/Footer';
 
 interface Product {
   _id: string;
@@ -21,11 +22,11 @@ interface Product {
 
 // Hair categories with icons/descriptions
 const HAIR_CATEGORIES = [
-  { name: 'Straight', slug: 'straight', emoji: '✨', tagline: 'Sleek & Refined' },
-  { name: 'Curly', slug: 'curly', emoji: '🌀', tagline: 'Bold & Bouncy' },
-  { name: 'Wavy', slug: 'wavy', emoji: '🌊', tagline: 'Effortless Flow' },
-  { name: 'Short', slug: 'short', emoji: '💎', tagline: 'Chic & Modern' },
-  { name: 'Long', slug: 'long', emoji: '👑', tagline: 'Regal Length' },
+  { name: 'Straight', slug: 'straight', tagline: 'Sleek & Refined' },
+  { name: 'Curly', slug: 'curly', tagline: 'Bold & Bouncy' },
+  { name: 'Wavy', slug: 'wavy', tagline: 'Effortless Flow' },
+  { name: 'Short', slug: 'short', tagline: 'Chic & Modern' },
+  { name: 'Long', slug: 'long', tagline: 'Regal Length' },
 ];
 
 export default function HomePage() {
@@ -222,7 +223,7 @@ export default function HomePage() {
                   href={`/products?category=${cat.slug}`}
                   className="group flex flex-col items-center gap-3 p-6 md:p-8 bg-brand-panel border border-brand-text/5 rounded-2xl hover:border-brand-accent/30 hover:shadow-soft transition-all duration-300 min-w-[140px]"
                 >
-                  <span className="text-3xl group-hover:scale-110 transition-transform duration-300">{cat.emoji}</span>
+
                   <span className="font-sans font-semibold text-sm uppercase tracking-widest text-brand-text">
                     {cat.name}
                   </span>
@@ -250,7 +251,7 @@ export default function HomePage() {
             <div className="flex items-end justify-between mb-10">
               <div>
                 <span className="text-brand-accent text-xs font-sans font-semibold uppercase tracking-[0.3em] mb-2 block">
-                  {cat.emoji} {cat.tagline}
+                  {cat.tagline}
                 </span>
                 <h2 className="text-3xl md:text-4xl font-serif tracking-tighter">{cat.name} Collection</h2>
               </div>
@@ -291,7 +292,7 @@ export default function HomePage() {
                           }}
                           className="flex-1 text-center bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-md hover:bg-amber-600 transition-colors"
                         >
-                          Add Bag
+                          Add To Bag
                         </button>
                       </div>
                     </div>
@@ -347,15 +348,15 @@ export default function HomePage() {
         {/* Trust Badges */}
         <div className="max-w-3xl mx-auto mt-16 grid grid-cols-3 gap-6 md:gap-12">
           <div className="flex flex-col items-center gap-2">
-            <span className="text-2xl">📦</span>
+            <Package className="w-8 h-8 text-brand-accent mb-1" strokeWidth={1.5} />
             <span className="text-[10px] md:text-xs font-sans font-semibold uppercase tracking-widest text-brand-text">Nationwide Shipping</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-2xl">💎</span>
+            <Sparkles className="w-8 h-8 text-brand-accent mb-1" strokeWidth={1.5} />
             <span className="text-[10px] md:text-xs font-sans font-semibold uppercase tracking-widest text-brand-text">100% Raw Hair</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="text-2xl">🔒</span>
+            <ShieldCheck className="w-8 h-8 text-brand-accent mb-1" strokeWidth={1.5} />
             <span className="text-[10px] md:text-xs font-sans font-semibold uppercase tracking-widest text-brand-text">Secure Checkout</span>
           </div>
         </div>
@@ -367,6 +368,8 @@ export default function HomePage() {
         isOpen={!!quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
       />
+
+      <Footer />
     </div>
   );
 }

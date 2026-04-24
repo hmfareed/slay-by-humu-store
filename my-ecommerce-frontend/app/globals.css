@@ -14,6 +14,8 @@
   --shadow-soft: 0 20px 60px -15px var(--shadow-color);
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
   :root {
     --bg-main: #F9F9F9;

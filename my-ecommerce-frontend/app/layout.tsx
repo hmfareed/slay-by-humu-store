@@ -7,6 +7,7 @@ import SlideOutCart from "@/components/SlideOutCart";
 import BottomNav from "@/components/BottomNav";
 import { NotificationProvider } from "@/src/context/NotificationContext";
 import { AuthProvider } from "@/src/context/AuthContext";
+import { LanguageProvider } from "@/src/context/LanguageContext";
 import Toaster from "@/components/Toaster";
 
 const playfair = Playfair_Display({
@@ -35,11 +36,13 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <NotificationProvider>
             <AuthProvider>
-              <SmoothScroll>
-                {children}
-                <SlideOutCart />
-                <BottomNav />
-              </SmoothScroll>
+              <LanguageProvider>
+                <SmoothScroll>
+                  {children}
+                  <SlideOutCart />
+                  <BottomNav />
+                </SmoothScroll>
+              </LanguageProvider>
             </AuthProvider>
             <Toaster />
           </NotificationProvider>

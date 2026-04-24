@@ -21,6 +21,7 @@ interface CartStore {
   items: CartItem[];
   addItem: (product: { _id: string; name: string; price: number; images: string[]; category?: string | { name: string; _id: string }; description?: string; quantity?: number }) => Promise<void>;
   removeItem: (productId: string) => Promise<void>;
+  updateQuantity: (productId: string, quantity: number) => Promise<void>;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -78,6 +79,39 @@ export const useCartStore = create<CartStore>((set, get) => ({
         });
       } catch (error) {
         console.error('Failed to remove item from backend cart:', error);
+      }
+    }
+  },
+
+  updateQuantity: async (productId, quantity) => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    if (quantity <= 0) {
+      await get().removeItem(productId);
+      return;
+    }
+
+    // Optimistic UI update
+    set((state) => {
+      const existing = state.items.findIndex(item => item.product._id === productId);
+      if (existing !== -1) {
+        const updated = [...state.items];
+        updated[existing].quantity = quantity;
+        return { items: updated };
+      }
+      return state;
+    });
+
+    // Sync with backend if logged in
+    if (token) {
+      try {
+        await axios.put(`${API_BAR_URL}/cart/${productId}`, {
+          quantity
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (error) {
+        console.error('Failed to update quantity on backend:', error);
       }
     }
   },

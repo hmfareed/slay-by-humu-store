@@ -7,7 +7,7 @@ const createReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
     const productId = req.params.productId;
-    const userId = req.user._id;
+    const userId = req.user.id;
 
     // Check if user already reviewed this product
     const alreadyReviewed = await Review.findOne({ product: productId, user: userId });

@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Package, MapPin, CreditCard, Settings, LogOut,
-  ChevronRight, ShoppingBag, Heart, Moon, Sun, Bell, MessageCircle
+  ChevronRight, ShoppingBag, Heart, Moon, Sun, Bell, MessageCircle, Clock
 } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
@@ -81,6 +81,7 @@ export default function AccountPage() {
     { icon: CreditCard, label: 'Payment Methods', desc: 'Cards & mobile money', href: '/account/payment', badge: null },
     { icon: ShoppingBag, label: 'My Cart', desc: 'View your shopping bag', href: '/cart', badge: cartCount || null },
     { icon: Heart, label: 'Wishlist', desc: 'Your saved pieces', href: '/wishlist', badge: wishlistCount || null },
+    { icon: Clock, label: 'Recently Viewed', desc: 'Pieces you looked at', href: '/account/recently-viewed', badge: null },
     { icon: Settings, label: 'Settings', desc: 'Dark mode, password & more', href: '/account/settings', badge: null },
   ];
 

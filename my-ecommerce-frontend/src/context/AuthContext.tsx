@@ -89,7 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json();
-        setOrderCount(ordersData.length);
+        const activeOrders = ordersData.filter((o: any) => ['pending', 'processing', 'shipped'].includes(o.status));
+        setOrderCount(activeOrders.length);
       }
     } catch (err) {
       console.error('Failed to fetch secured data', err);

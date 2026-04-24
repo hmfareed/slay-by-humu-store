@@ -78,16 +78,16 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
       setMessages([
         {
           id: 'welcome',
-          text: `${greeting} 👋 I'm your Slay Assistant. I can help you find products, track orders, manage your account, and more. What can I do for you?`,
+          text: `${greeting} I'm your Slay Assistant. I can help you find products, track orders, manage your account, and more. What can I do for you?`,
           sender: 'ai',
           timestamp: new Date(),
           type: 'quickActions',
           data: {
             actions: [
-              { label: '🔍 Browse Products', message: 'Show me your best products' },
-              { label: '📦 Track My Order', message: 'Where is my order?' },
-              { label: '🛒 View My Cart', message: "What's in my cart?" },
-              { label: '💬 Talk to Support', message: 'I need help with something' },
+              { label: 'Browse Products', message: 'Show me your best products' },
+              { label: 'Track My Order', message: 'Where is my order?' },
+              { label: 'View My Cart', message: "What's in my cart?" },
+              { label: 'Talk to Support', message: 'I need help with something' },
             ]
           }
         },
@@ -133,7 +133,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
 
       case 'greeting': {
         const greetings = [
-          `Hey${userName ? ` ${userName}` : ''}! 😊 How can I help you today?`,
+          `Hey${userName ? ` ${userName}` : ''}! How can I help you today?`,
           `Hello${userName ? ` ${userName}` : ''}! Welcome to Slay By Humu. What are you looking for?`,
           `Hi there! Ready to help you find your perfect look. What's on your mind?`,
         ];
@@ -166,7 +166,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
 
       case 'order_status': {
         if (!authToken) {
-          return { ...baseMsg, text: "To track your orders, you'll need to sign in first. Head to your Account page to log in, then come back and I'll help you track your order! 🔐", type: 'text' };
+          return { ...baseMsg, text: "To track your orders, you'll need to sign in first. Head to your Account page to log in, then come back and I'll help you track your order.", type: 'text' };
         }
         const orders = await fetchOrders();
         if (orders && orders.length > 0) {
@@ -177,12 +177,12 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
             data: { orders: orders.slice(0, 5) }
           };
         }
-        return { ...baseMsg, text: "You don't have any orders yet. Ready to start shopping? Just ask me to show you some products! 🛍️", type: 'text' };
+        return { ...baseMsg, text: "You don't have any orders yet. Ready to start shopping? Just ask me to show you some products.", type: 'text' };
       }
 
       case 'cart_info': {
         if (cartItems.length === 0) {
-          return { ...baseMsg, text: "Your cart is empty right now. Want me to recommend some products? Just tell me what style you're looking for! 💫", type: 'text' };
+          return { ...baseMsg, text: "Your cart is empty right now. Want me to recommend some products? Just tell me what style you're looking for.", type: 'text' };
         }
         const total = cartItems.reduce((sum, item) => sum + (item.product?.price || item.price || 0) * (item.quantity || 1), 0);
         return {
@@ -197,7 +197,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return {
           ...baseMsg,
           type: 'text',
-          text: `📦 **Delivery Info:**\n\n• Orders are processed within **1–2 business days**\n• Delivery within Ghana: **1–3 days**\n• International shipping: **5–10 business days**\n• You'll receive a tracking update once your order ships\n\nNeed to update your delivery address? Go to **Account → Delivery Address**.`
+          text: `**Delivery Info:**\n\n• Orders are processed within **1–2 business days**\n• Delivery within Ghana: **1–3 days**\n• International shipping: **5–10 business days**\n• You'll receive a tracking update once your order ships\n\nNeed to update your delivery address? Go to **Account → Delivery Address**.`
         };
       }
 
@@ -205,7 +205,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return {
           ...baseMsg,
           type: 'text',
-          text: `🔄 **Returns & Refunds:**\n\n• Returns accepted within **7 days** of delivery\n• Items must be **unused** and in original packaging\n• Contact us via **WhatsApp (+233 50 200 2904)** to start a return\n• Refunds are processed within **3–5 business days** after we receive the item\n\nFor damaged or wrong items, please send photos via WhatsApp for faster resolution.`
+          text: `**Returns & Refunds:**\n\n• Returns accepted within **7 days** of delivery\n• Items must be **unused** and in original packaging\n• Contact us via **WhatsApp (+233 50 200 2904)** to start a return\n• Refunds are processed within **3–5 business days** after we receive the item\n\nFor damaged or wrong items, please send photos via WhatsApp for faster resolution.`
         };
       }
 
@@ -218,10 +218,10 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
 
         if (helpItems.length === 0) {
           helpItems.push(
-            { text: '📍 Delivery Address', link: '/account/address' },
-            { text: '💳 Payment Methods', link: '/account/payment' },
-            { text: '⚙️ Settings & Password', link: '/account/settings' },
-            { text: '📦 Order History', link: '/account/orders' }
+            { text: 'Delivery Address', link: '/account/address' },
+            { text: 'Payment Methods', link: '/account/payment' },
+            { text: 'Settings & Password', link: '/account/settings' },
+            { text: 'Order History', link: '/account/orders' }
           );
         }
         return {
@@ -235,28 +235,28 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return {
           ...baseMsg,
           type: 'text',
-          text: `💳 **Payment & Checkout:**\n\n• We accept **Mobile Money** (MTN, Vodafone, AirtelTigo)\n• **Credit/Debit cards** (Visa, Mastercard)\n• **Bank Transfer**\n\n**To checkout:**\n1. Add items to your cart\n2. Go to Cart → Proceed to Checkout\n3. Enter your delivery address\n4. Choose payment method and confirm\n\nAll payments are secure. Need help adding something to your cart?`
+          text: `**Payment & Checkout:**\n\n• We accept **Mobile Money** (MTN, Vodafone, AirtelTigo)\n• **Credit/Debit cards** (Visa, Mastercard)\n• **Bank Transfer**\n\n**To checkout:**\n1. Add items to your cart\n2. Go to Cart → Proceed to Checkout\n3. Enter your delivery address\n4. Choose payment method and confirm\n\nAll payments are secure. Need help adding something to your cart?`
         };
       }
 
       case 'thanks': {
         const responses = [
-          "You're welcome! Happy to help. Is there anything else you need? 😊",
-          "My pleasure! Don't hesitate to ask if you need anything else. 💛",
-          "Glad I could help! Enjoy your shopping experience at Slay By Humu! ✨",
+          "You're welcome! Happy to help. Is there anything else you need?",
+          "My pleasure! Don't hesitate to ask if you need anything else.",
+          "Glad I could help! Enjoy your shopping experience at Slay By Humu.",
         ];
         return { ...baseMsg, text: responses[Math.floor(Math.random() * responses.length)], type: 'text' };
       }
 
       case 'farewell': {
-        return { ...baseMsg, text: `Goodbye${userName ? ` ${userName}` : ''}! Thanks for visiting Slay By Humu. Come back anytime! 👋✨`, type: 'text' };
+        return { ...baseMsg, text: `Goodbye${userName ? ` ${userName}` : ''}! Thanks for visiting Slay By Humu. Come back anytime!`, type: 'text' };
       }
 
       default: {
         return {
           ...baseMsg,
           type: 'text',
-          text: `I'm not sure I understand that. Here are some things I can help with:\n\n• 🔍 **Find products** — "Show me straight wigs"\n• 📦 **Track orders** — "Where is my order?"\n• 🛒 **Cart info** — "What's in my cart?"\n• 💳 **Payment help** — "How do I pay?"\n• 📍 **Account help** — "Change my address"\n\nOr you can reach our team directly via **WhatsApp at +233 50 200 2904**.`
+          text: `I'm not sure I understand that. Here are some things I can help with:\n\n• **Find products** — "Show me straight wigs"\n• **Track orders** — "Where is my order?"\n• **Cart info** — "What's in my cart?"\n• **Payment help** — "How do I pay?"\n• **Account help** — "Change my address"\n\nOr you can reach our team directly via **WhatsApp at +233 50 200 2904**.`
         };
       }
     }
@@ -414,7 +414,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-serif font-bold text-base text-brand-text">Slay Assistant</h3>
+              <h3 className="font-serif font-bold text-base text-brand-text">SBH Assistant</h3>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                 <span className="text-[10px] font-sans font-medium uppercase tracking-widest text-brand-muted">AI • Online</span>
@@ -481,7 +481,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
           </div>
           <p className="text-[10px] text-center text-brand-muted mt-2.5 font-sans uppercase tracking-[0.15em] flex items-center justify-center gap-1.5">
             <Sparkles size={10} className="text-brand-accent" />
-            Powered by Slay AI
+            Powered by Fareed Core Tech
           </p>
         </div>
       </div>

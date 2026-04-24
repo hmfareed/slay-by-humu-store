@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   Bell,
-  Search
+  Search,
+  MessageSquare
 } from 'lucide-react';
 
 const sidebarLinks = [
@@ -22,6 +23,7 @@ const sidebarLinks = [
   { name: 'Products', href: '/admin/products', icon: ShoppingBag },
   { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
   { name: 'Customers', href: '/admin/customers', icon: Users },
+  { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ];
 
@@ -106,7 +108,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <motion.aside
         initial={{ x: isMobile ? '-100%' : 0 }}
         animate={{ x: isSidebarOpen ? 0 : '-100%' }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        transition={{ duration: 0.15, ease: 'easeInOut' }}
         className={`fixed md:relative flex flex-col w-72 h-screen z-50 transition-all 
           bg-white dark:bg-[#121212] border-r border-zinc-200 dark:border-zinc-800 shadow-xl md:shadow-none`}
       >

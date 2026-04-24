@@ -4,27 +4,38 @@ const { createNotification } = require('./notificationController');
 
 const createOrder = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { shippingAddress, paymentMethod } = req.body;
+    const userId = req.user ? req.user.id : null;
+    const { shippingAddress, paymentMethod, items } = req.body;
 
-    const cart = await Cart.findOne({ user: userId }).populate('items.product');
+    let orderItems = [];
+    let totalAmount = 0;
 
-    if (!cart || cart.items.length === 0) {
-      return res.status(400).json({ message: 'Cart is empty' });
+    if (userId) {
+      const cart = await Cart.findOne({ user: userId }).populate('items.product');
+      if (cart && cart.items.length > 0) {
+        for (const item of cart.items) {
+          if (!item.product) continue;
+          const price = item.product.price;
+          totalAmount += price * item.quantity;
+          orderItems.push({
+            product: item.product._id,
+            quantity: item.quantity,
+            price: price
+          });
+        }
+      }
     }
 
-    let totalAmount = 0;
-    const orderItems = [];
-
-    for (const item of cart.items) {
-      if (!item.product) continue;
-      const price = item.product.price;
-      totalAmount += price * item.quantity;
-      orderItems.push({
-        product: item.product._id,
-        quantity: item.quantity,
-        price: price
-      });
+    if (orderItems.length === 0 && items && items.length > 0) {
+      // Guest Checkout or specific items sent
+      for (const item of items) {
+        totalAmount += item.price * item.quantity;
+        orderItems.push({
+          product: item.product,
+          quantity: item.quantity,
+          price: item.price
+        });
+      }
     }
 
     if (orderItems.length === 0) {
@@ -32,15 +43,17 @@ const createOrder = async (req, res) => {
     }
 
     const order = await Order.create({
-      user: userId,
+      user: userId || undefined, // Guest orders won't have a user
       items: orderItems,
       totalAmount,
       shippingAddress,
       paymentMethod: paymentMethod || 'Cash on Delivery',
     });
 
-    // Clear cart
-    await Cart.findOneAndUpdate({ user: userId }, { items: [] });
+    // Clear cart if user is logged in
+    if (userId) {
+      await Cart.findOneAndUpdate({ user: userId }, { items: [] });
+    }
 
     res.status(201).json({ message: "Order placed successfully", order });
   } catch (error) {
@@ -111,11 +124,18 @@ const updateOrderStatus = async (req, res) => {
       .map(item => item.product ? item.product.name : 'Unknown Item')
       .join(', ');
 
+    let notificationTitle = `Order ${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}`;
+    let notificationMessage = `Great news! Your order containing [${itemNames}] has been marked as ${normalizedStatus}. We'll keep you posted on the progress.`;
+
+    if (normalizedStatus === 'cancelled') {
+      notificationMessage = `Your order containing [${itemNames}] has been cancelled.`;
+    }
+
     // Trigger detailed notification
     await createNotification(
       order.user,
-      `Order ${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}`,
-      `Great news! Your order containing [${itemNames}] has been marked as ${normalizedStatus}. We'll keep you posted on the progress.`,
+      notificationTitle,
+      notificationMessage,
       'order',
       req.app.get('io')
     );
@@ -184,4 +204,13 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus, getAllOrders, cancelOrder };
+const deleteAllOrders = async (req, res) => {
+  try {
+    await Order.deleteMany({});
+    res.json({ message: "All orders have been deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus, getAllOrders, cancelOrder, deleteAllOrders };

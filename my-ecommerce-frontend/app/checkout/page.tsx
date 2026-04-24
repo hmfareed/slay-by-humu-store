@@ -25,6 +25,10 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('');
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
+  // Payment State
+  const [paymentNetwork, setPaymentNetwork] = useState('');
+  const [paymentNumber, setPaymentNumber] = useState('');
+
   // Address Autocomplete state
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -110,31 +114,54 @@ export default function CheckoutPage() {
     setAddressSuggestions([]);
   };
 
+  const handlePaymentNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const num = e.target.value.replace(/\D/g, ''); // only digits
+    setPaymentNumber(num);
+    
+    if (num.length >= 3) {
+      const prefix = num.substring(0, 3);
+      if (['059', '024', '055', '025', '054'].includes(prefix)) {
+        setPaymentNetwork('MTN MOMO');
+      } else if (['020', '050'].includes(prefix)) {
+        setPaymentNetwork('Telecel Cash');
+      } else if (['026', '056'].includes(prefix)) {
+        setPaymentNetwork('AirtelTigo Cash');
+      }
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (cartItems.length === 0) return;
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      showNotification('Please login to place an order', 'error');
-      return;
-    }
 
     if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.phoneNumber) {
       showNotification('Please fill in all shipping details, including your phone number', 'error');
       return;
     }
 
+    if (!paymentNetwork || !paymentNumber) {
+      showNotification('Please select a payment network and enter your mobile money number', 'error');
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const headers: any = {
+        'Content-Type': 'application/json',
+      };
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const res = await fetch(`${API_URL}/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           shippingAddress,
+          paymentMethod: `${paymentNetwork} (${paymentNumber})`,
+          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity, price: item.product.price }))
         }),
       });
 
@@ -259,20 +286,32 @@ export default function CheckoutPage() {
             >
               <h2 className="text-3xl font-bold mb-12 tracking-tight">Delivery Details</h2>
               
-              <div className="space-y-10 font-sans">
-                <div className="group relative">
+              {!token && (
+                <div className="bg-brand-text/5 p-6 rounded-2xl mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 border border-brand-text/10">
+                  <div>
+                    <h3 className="font-serif font-bold text-lg mb-1 text-brand-text">Guest Checkout</h3>
+                    <p className="text-brand-muted text-sm font-sans">Create an account to easily track your bespoke orders.</p>
+                  </div>
+                  <Link href="/login" className="btn-secondary py-3 px-6 whitespace-nowrap text-xs">
+                    Create Account
+                  </Link>
+                </div>
+              )}
+
+              <div className="space-y-12 font-sans">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                    Street Address
+                  </label>
                   <input
                     type="text"
                     name="address"
                     value={shippingAddress.address}
                     onChange={handleInputChange}
-                    className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-xl font-light placeholder-transparent"
-                    placeholder="Street Address"
+                    className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                    placeholder="e.g. 123 Main St"
                     required
                   />
-                  <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                    Street Address
-                  </label>
 
                   {/* Autocomplete Dropdown */}
                   <AnimatePresence>
@@ -297,50 +336,50 @@ export default function CheckoutPage() {
                   </AnimatePresence>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                  <div className="group relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                      City
+                    </label>
                     <input
                       type="text"
                       name="city"
                       value={shippingAddress.city}
                       onChange={handleInputChange}
-                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-xl font-light placeholder-transparent"
-                      placeholder="City"
+                      className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                      placeholder="e.g. Accra"
                       required
                     />
-                    <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                      City
-                    </label>
                   </div>
-                  <div className="group relative">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                      Postal Code / GPS
+                    </label>
                     <input
                       type="text"
                       name="postalCode"
                       value={shippingAddress.postalCode}
                       onChange={handleInputChange}
-                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-xl font-light placeholder-transparent"
-                      placeholder="Postal Code"
+                      className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                      placeholder="e.g. GA-123-4567"
                       required
                     />
-                    <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                      Postal Code
-                    </label>
                   </div>
                 </div>
 
-                <div className="group relative">
+                <div className="flex flex-col gap-2">
+                  <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                    Phone Number
+                  </label>
                   <input
                     type="tel"
                     name="phoneNumber"
                     value={shippingAddress.phoneNumber}
                     onChange={handleInputChange}
-                    className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-xl font-light placeholder-transparent"
-                    placeholder="Phone Number"
+                    className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                    placeholder="+233 24 000 0000"
                     required
                   />
-                  <label className="absolute left-0 top-4 text-brand-muted text-xl transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                    Phone Number
-                  </label>
                 </div>
 
                 <div className="pt-4">
@@ -353,9 +392,67 @@ export default function CheckoutPage() {
                       className="w-full px-6 py-5 bg-brand-bg border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light rounded-2xl appearance-none"
                     >
                       <option value="Ghana">Ghana</option>
+                      <option value="Nigeria">Nigeria</option>
+                      <option value="Kenya">Kenya</option>
+                      <option value="South Africa">South Africa</option>
+                      <option value="Egypt">Egypt</option>
+                      <option value="Morocco">Morocco</option>
+                      <option value="Ethiopia">Ethiopia</option>
+                      <option value="Tanzania">Tanzania</option>
+                      <option value="Uganda">Uganda</option>
+                      <option value="Rwanda">Rwanda</option>
+                      <option value="Senegal">Senegal</option>
+                      <option value="Ivory Coast">Ivory Coast</option>
+                      <option value="Cameroon">Cameroon</option>
+                      <option value="Zambia">Zambia</option>
+                      <option value="Zimbabwe">Zimbabwe</option>
+                      <option value="Botswana">Botswana</option>
+                      <option value="Namibia">Namibia</option>
                     </select>
                     <div className="absolute inset-y-0 right-0 flex items-center px-6 pointer-events-none text-brand-muted">
                       ▼
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Details */}
+                <div className="pt-8 mt-8 border-t border-brand-text/10">
+                  <h3 className="text-2xl font-bold mb-8 tracking-tight">Payment Details</h3>
+                  
+                  <div className="space-y-8">
+                    <div>
+                      <label className="block text-xs font-medium mb-4 tracking-widest uppercase text-brand-muted">Select Network</label>
+                      <div className="grid grid-cols-3 gap-3 md:gap-4">
+                        {['MTN MOMO', 'Telecel Cash', 'AirtelTigo Cash'].map((net) => (
+                          <button
+                            key={net}
+                            type="button"
+                            onClick={() => setPaymentNetwork(net)}
+                            className={`py-3 px-2 rounded-xl border text-xs sm:text-sm font-medium transition-all ${
+                              paymentNetwork === net 
+                                ? 'bg-[#a47b38] border-[#a47b38] text-white shadow-md' 
+                                : 'bg-brand-bg border-brand-text/10 hover:border-brand-accent/50 text-brand-text/80'
+                            }`}
+                          >
+                            {net.replace(' Cash', '')}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 mt-10">
+                      <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                        Mobile Money Number
+                      </label>
+                      <input
+                        type="tel"
+                        value={paymentNumber}
+                        onChange={handlePaymentNumberChange}
+                        maxLength={10}
+                        className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                        placeholder="e.g. 0240000000"
+                        required
+                      />
                     </div>
                   </div>
                 </div>

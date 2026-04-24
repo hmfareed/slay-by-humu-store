@@ -45,7 +45,7 @@ export default function LoginPage() {
     }
 
     // Phone validation for registration
-    if (!isLogin && (!formData.phone || formData.phone.length < 8)) {
+    if (!isLogin && (!formData.phone || formData.phone.length < 10)) {
       showNotification('Please enter a valid phone number.', 'error');
       return;
     }
@@ -107,7 +107,6 @@ export default function LoginPage() {
       </nav>
 
       <div className="flex-1 flex items-center justify-center py-20 px-4 relative">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[30rem] h-[30rem] bg-brand-accent/5 rounded-full blur-[150px] pointer-events-none -z-10" />
 
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -115,23 +114,16 @@ export default function LoginPage() {
           transition={{ duration: 0.6 }}
           className="bg-brand-panel p-10 md:p-14 rounded-3xl shadow-soft border border-brand-text/5 w-full max-w-lg"
         >
-          <h1 className="text-4xl font-bold text-center mb-10 tracking-tight">
-            {isLogin ? 'Welcome Back.' : 'Join the Collection.'}
-          </h1>
-
-          <div className="flex justify-center gap-4 mb-10 p-1 bg-brand-text/5 rounded-full font-sans">
-            <button
-              onClick={() => setIsLogin(true)}
-              className={`flex-1 py-3 rounded-full text-sm font-medium transition-all ${isLogin ? 'bg-brand-panel shadow-soft text-brand-text' : 'text-brand-muted hover:text-brand-text'}`}
-            >
-              Login
-            </button>
-            <button
-              onClick={() => setIsLogin(false)}
-              className={`flex-1 py-3 rounded-full text-sm font-medium transition-all ${!isLogin ? 'bg-brand-panel shadow-soft text-brand-text' : 'text-brand-muted hover:text-brand-text'}`}
-            >
-              Register
-            </button>
+          <div className="text-center mb-10">
+            <h2 className="text-brand-accent text-sm font-sans font-medium tracking-[0.2em] uppercase mb-4">
+              Slay By Humu
+            </h2>
+            <h1 className="text-4xl md:text-5xl font-serif mb-2 tracking-tight">
+              {isLogin ? 'Sign In' : 'Create Account'}
+            </h1>
+            <p className="text-brand-muted font-sans font-light text-sm">
+              {isLogin ? 'Access your luxury collection' : 'Join the Slay By Humu community'}
+            </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-8 font-sans">
@@ -142,73 +134,73 @@ export default function LoginPage() {
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="group relative"
+                    className="flex flex-col gap-2"
                   >
+                    <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                      Full Name
+                    </label>
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
-                      placeholder="Full Name"
+                      className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                      placeholder="e.g. Humu Salma"
                     />
-                    <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                      Full Name
-                    </label>
                   </motion.div>
 
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
-                    className="group relative"
+                    className="flex flex-col gap-2"
                   >
+                    <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                      Phone Number
+                    </label>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
                       required
-                      className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
-                      placeholder="Phone Number"
+                      className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                      placeholder="+233 24 000 0000"
                     />
-                    <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                      Phone Number
-                    </label>
                   </motion.div>
                 </>
               )}
             </AnimatePresence>
 
-            <div className="group relative">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                Email Address
+              </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
-                placeholder="Email Address"
+                className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                placeholder="humu@example.com"
               />
-              <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                Email Address
-              </label>
             </div>
 
-            <div className="group relative">
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                Password
+              </label>
               <input
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="peer w-full px-0 py-4 bg-transparent border-b-2 border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-lg font-light placeholder-transparent"
-                placeholder="Password"
+                className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                placeholder="Min. 8 characters"
               />
-              <label className="absolute left-0 top-4 text-brand-muted text-lg transition-all peer-focus:-top-4 peer-focus:text-xs peer-focus:text-brand-accent peer-focus:font-semibold peer-valid:-top-4 peer-valid:text-xs peer-valid:text-brand-accent peer-valid:font-semibold cursor-text">
-                Password
-              </label>
             </div>
 
             <button
@@ -218,10 +210,10 @@ export default function LoginPage() {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-3">
-                  <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                  <span className="w-5 h-5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
                   Processing...
                 </span>
-              ) : isLogin ? 'Sign In' : 'Create Account'}
+              ) : isLogin ? 'SIGN IN' : 'CREATE ACCOUNT'}
             </button>
           </form>
 
@@ -229,9 +221,9 @@ export default function LoginPage() {
             {isLogin ? "Don't have an account? " : "Already have an account? "}
             <button 
               onClick={() => setIsLogin(!isLogin)}
-              className="text-brand-text font-medium hover:text-brand-accent transition-colors ml-1"
+              className="text-brand-accent font-medium hover:text-brand-accent/80 transition-colors ml-1"
             >
-              {isLogin ? 'Register' : 'Login'}
+              {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </p>
         </motion.div>

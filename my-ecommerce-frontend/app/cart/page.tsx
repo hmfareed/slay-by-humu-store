@@ -12,6 +12,7 @@ export default function CartPage() {
   const items = useCartStore((s) => s.items);
   const removeItem = useCartStore((s) => s.removeItem);
   const addItem = useCartStore((s) => s.addItem);
+  const updateQuantity = useCartStore((s) => s.updateQuantity);
   const totalItems = useCartStore((s) => s.getTotalItems());
   const totalPrice = useCartStore((s) => s.getTotalPrice());
   const setItems = useCartStore((s) => s.setItems);
@@ -158,9 +159,9 @@ export default function CartPage() {
                             onClick={() => {
                               if (item.quantity <= 1) {
                                 handleRemove(item.product._id, item.product.name);
+                              } else {
+                                updateQuantity(item.product._id, item.quantity - 1);
                               }
-                              // For decrement > 1, we'd need a decrementItem function.
-                              // For now, quantity of 1 removes the item.
                             }}
                             className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text transition-colors"
                           >

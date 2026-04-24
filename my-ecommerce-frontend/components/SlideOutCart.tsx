@@ -1,7 +1,7 @@
 'use client';
 
 import { useCartStore } from '@/src/store/cartStore';
-import { X, ShoppingBag } from 'lucide-react';
+import { X, ShoppingBag, Minus, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,6 +11,7 @@ export default function SlideOutCart() {
   const items = useCartStore((state) => state.items);
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
   const removeItem = useCartStore((state) => state.removeItem);
+  const updateQuantity = useCartStore((state) => state.updateQuantity);
   const { showNotification } = useNotification();
   
   const [mounted, setMounted] = useState(false);
@@ -92,7 +93,21 @@ export default function SlideOutCart() {
                     <p className="text-brand-muted text-sm font-sans mb-auto uppercase tracking-widest">{typeof item.product.category === 'object' ? item.product.category.name : item.product.category}</p>
                     
                     <div className="flex justify-between items-end mt-4">
-                      <p className="text-sm font-sans font-medium text-brand-text">Qty {item.quantity}</p>
+                      <div className="flex items-center gap-3 border border-brand-text/10 rounded-full px-2 py-1">
+                        <button 
+                          onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
+                          className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="text-sm font-sans font-medium text-brand-text w-4 text-center">{item.quantity}</span>
+                        <button 
+                          onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
+                          className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
                       <p className="text-lg font-medium text-brand-text tracking-tight">₵{(item.product.price * item.quantity).toFixed(2)}</p>
                     </div>
                     

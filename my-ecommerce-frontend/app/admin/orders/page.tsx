@@ -17,7 +17,7 @@ interface Order {
   createdAt: string;
 }
 
-const STATUS_TABS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+const STATUS_TABS = ['all', 'pending', 'processing', 'shipped', 'picked_up', 'delivered', 'cancelled'];
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -114,6 +114,28 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const handleDeleteAllOrders = async () => {
+    if (window.confirm('Are you absolutely sure you want to delete ALL orders? This action cannot be undone.')) {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_URL}/orders/all`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          setOrders([]);
+          alert('All orders have been deleted.');
+        } else {
+          const data = await res.json();
+          alert(data.message || 'Failed to delete orders');
+        }
+      } catch (error) {
+        console.error(error);
+        alert('Network error while deleting orders');
+      }
+    }
+  };
+
   const filteredOrders = orders.filter(o =>
     o._id.toLowerCase().includes(search.toLowerCase()) ||
     (o.user && o.user.name?.toLowerCase().includes(search.toLowerCase()))
@@ -122,6 +144,7 @@ export default function AdminOrdersPage() {
   const statusBadge = (status: string) => {
     const s = status.toLowerCase();
     if (s === 'delivered') return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+    if (s === 'picked_up') return 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-600 dark:text-white dark:border-emerald-500';
     if (s === 'shipped') return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
     if (s === 'processing') return 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:text-indigo-400 dark:border-indigo-500/20';
     if (s === 'cancelled') return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
@@ -137,9 +160,18 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Orders</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">Full order management and tracking.</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Orders</h1>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Full order management and tracking.</p>
+        </div>
+        <button 
+          onClick={handleDeleteAllOrders}
+          className="bg-rose-500 hover:bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 shadow-sm"
+        >
+          <AlertTriangle size={16} />
+          Delete All Orders
+        </button>
       </div>
 
       {/* Status Tabs */}
@@ -155,7 +187,7 @@ export default function AdminOrdersPage() {
             }`}
           >
             {tab}
-            {tab !== 'all' && (
+            {tab !== 'all' && tab !== 'cancelled' && (
               <span className="ml-1.5 text-xs opacity-70">
                 ({orders.filter(o => tab === 'all' || o.status === tab).length})
               </span>
@@ -260,6 +292,7 @@ export default function AdminOrdersPage() {
                           <option value="pending">Pending</option>
                           <option value="processing">Processing</option>
                           <option value="shipped">Shipped</option>
+                          <option value="picked_up">Picked Up</option>
                           <option value="delivered">Delivered</option>
                           <option value="cancelled">Cancelled</option>
                         </select>
@@ -393,6 +426,7 @@ export default function AdminOrdersPage() {
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
                     <option value="shipped">Shipped</option>
+                    <option value="picked_up">Picked Up</option>
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
