@@ -205,7 +205,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return {
           ...baseMsg,
           type: 'text',
-          text: `**Returns & Refunds:**\n\n• Returns accepted within **7 days** of delivery\n• Items must be **unused** and in original packaging\n• Contact us via **WhatsApp (+233 50 200 2904)** to start a return\n• Refunds are processed within **3–5 business days** after we receive the item\n\nFor damaged or wrong items, please send photos via WhatsApp for faster resolution.`
+          text: `**Returns & Refunds:**\n\n• Returns accepted within **7 days** of delivery\n• Items must be **unused** and in original packaging\n• Contact us via **WhatsApp (+233 54 488 6256)** to start a return\n• Refunds are processed within **3–5 business days** after we receive the item\n\nFor damaged or wrong items, please send photos via WhatsApp for faster resolution.`
         };
       }
 
@@ -256,7 +256,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return {
           ...baseMsg,
           type: 'text',
-          text: `I'm not sure I understand that. Here are some things I can help with:\n\n• **Find products** — "Show me straight wigs"\n• **Track orders** — "Where is my order?"\n• **Cart info** — "What's in my cart?"\n• **Payment help** — "How do I pay?"\n• **Account help** — "Change my address"\n\nOr you can reach our team directly via **WhatsApp at +233 50 200 2904**.`
+          text: `I'm not sure I understand that. Here are some things I can help with:\n\n• **Find products** — "Show me straight wigs"\n• **Track orders** — "Where is my order?"\n• **Cart info** — "What's in my cart?"\n• **Payment help** — "How do I pay?"\n• **Account help** — "Change my address"\n\nOr you can reach our team directly via **WhatsApp at +233 54 488 6256**.`
         };
       }
     }

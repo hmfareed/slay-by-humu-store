@@ -22,6 +22,10 @@ interface Product {
   price: number;
   category: string | { name: string; _id: string };
   images: string[];
+  texture?: string;
+  lace?: string;
+  longevity?: string;
+  styling?: string;
 }
 
 export default function ProductDetailPage() {
@@ -220,19 +224,19 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-2 gap-6 mb-12 font-sans text-sm">
             <div>
               <p className="text-brand-muted uppercase tracking-widest text-[10px] font-semibold mb-2">Texture</p>
-              <p className="font-medium">Raw, Unprocessed</p>
+              <p className="font-medium">{product.texture || 'Raw, Unprocessed'}</p>
             </div>
             <div>
               <p className="text-brand-muted uppercase tracking-widest text-[10px] font-semibold mb-2">Lace</p>
-              <p className="font-medium">Ultra-Thin HD</p>
+              <p className="font-medium">{product.lace || 'Ultra-Thin HD'}</p>
             </div>
             <div>
               <p className="text-brand-muted uppercase tracking-widest text-[10px] font-semibold mb-2">Longevity</p>
-              <p className="font-medium">2-3+ Years</p>
+              <p className="font-medium">{product.longevity || '2-3+ Years'}</p>
             </div>
             <div>
               <p className="text-brand-muted uppercase tracking-widest text-[10px] font-semibold mb-2">Styling</p>
-              <p className="font-medium">Takes Bleach & Heat</p>
+              <p className="font-medium">{product.styling || 'Takes Bleach & Heat'}</p>
             </div>
           </div>
 

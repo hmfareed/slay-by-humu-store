@@ -4,3 +4,6 @@ uploads/
 my-ecommerce-frontend/node_modules/
 my-ecommerce-frontend/.next/
 my-ecommerce-frontend/.env.local
+
+.vercel
+.env*.local

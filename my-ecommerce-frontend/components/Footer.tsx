@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { Phone } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -32,13 +33,17 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="lg:col-span-3">
             <h3 className="text-brand-accent text-sm tracking-[0.15em] font-serif mb-4 uppercase">Slay By Humu</h3>
-            <p className="text-sm leading-relaxed max-w-xs text-brand-text">
+            <p className="text-sm leading-relaxed max-w-xs text-brand-text mb-4">
               Luxury raw hair and extensions crafted with artistry, worn with elegance.
             </p>
+            <a href="tel:0544886256" className="inline-flex items-center gap-2 text-sm text-brand-text/80 hover:text-brand-accent transition-colors">
+              <Phone className="w-4 h-4" />
+              <span>0544886256</span>
+            </a>
           </div>
 
           {/* Links Grid */}
-          <div className="lg:col-span-4 grid grid-cols-2 sm:grid-cols-3 gap-8">
+          <div className="lg:col-span-4 grid grid-cols-2 sm:grid-cols-4 gap-8 sm:gap-4">
             <div>
               <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-brand-muted mb-4">Shop</h4>
               <ul className="space-y-3 text-sm text-brand-text/80">
@@ -53,7 +58,8 @@ export default function Footer() {
               <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-brand-muted mb-4">Company</h4>
               <ul className="space-y-3 text-sm text-brand-text/80">
                 <li><Link href="/about" className="hover:text-brand-accent transition-colors">About</Link></li>
-                <li><Link href="/services" className="hover:text-brand-accent transition-colors">Services</Link></li>
+                <li><Link href="/contact" className="hover:text-brand-accent transition-colors">Contact</Link></li>
+                <li><Link href="/faq" className="hover:text-brand-accent transition-colors">FAQ</Link></li>
               </ul>
             </div>
 
@@ -61,7 +67,15 @@ export default function Footer() {
               <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-brand-muted mb-4">Account</h4>
               <ul className="space-y-3 text-sm text-brand-text/80">
                 <li><Link href="/login" className="hover:text-brand-accent transition-colors">Sign In</Link></li>
-                <li><Link href="/login" className="hover:text-brand-accent transition-colors">Create Account</Link></li>
+                <li><Link href="/login" className="hover:text-brand-accent transition-colors">Register</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h4 className="text-[10px] uppercase tracking-[0.2em] font-bold text-brand-muted mb-4">Legal</h4>
+              <ul className="space-y-3 text-sm text-brand-text/80">
+                <li><Link href="/terms" className="hover:text-brand-accent transition-colors">Terms of Service</Link></li>
+                <li><Link href="/refund-policy" className="hover:text-brand-accent transition-colors">Refund Policy</Link></li>
               </ul>
             </div>
           </div>

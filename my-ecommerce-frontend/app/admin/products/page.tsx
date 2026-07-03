@@ -13,6 +13,10 @@ interface Product {
   category: string;
   stock: number;
   images: string[];
+  texture?: string;
+  lace?: string;
+  longevity?: string;
+  styling?: string;
 }
 
 const STORE_CATEGORIES = ['Straight', 'Curly', 'Wavy', 'Short', 'Long'];
@@ -35,6 +39,10 @@ export default function AdminProductsPage() {
     category: '',
     stock: '',
     brand: 'SlayByHumu',
+    texture: '',
+    lace: '',
+    longevity: '',
+    styling: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -47,6 +55,10 @@ export default function AdminProductsPage() {
       category: STORE_CATEGORIES[0],
       stock: '',
       brand: 'SlayByHumu',
+      texture: '',
+      lace: '',
+      longevity: '',
+      styling: '',
     });
     setImageFile(null);
     setEditingProductId(null);
@@ -95,6 +107,10 @@ export default function AdminProductsPage() {
     data.append('category', formData.category);
     data.append('stock', formData.stock);
     data.append('brand', formData.brand);
+    data.append('texture', formData.texture);
+    data.append('lace', formData.lace);
+    data.append('longevity', formData.longevity);
+    data.append('styling', formData.styling);
     if (imageFile) {
       data.append('images', imageFile);   
     }
@@ -137,6 +153,10 @@ export default function AdminProductsPage() {
       category: typeof product.category === 'object' ? (product.category as any).name : product.category,
       stock: product.stock.toString(),
       brand: 'SlayByHumu',
+      texture: product.texture || '',
+      lace: product.lace || '',
+      longevity: product.longevity || '',
+      styling: product.styling || '',
     });
     setIsModalOpen(true);
   };
@@ -387,6 +407,22 @@ export default function AdminProductsPage() {
                   <div>
                     <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Stock Quantity</label>
                     <input name="stock" type="number" value={formData.stock} onChange={handleInputChange} required className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Texture</label>
+                    <input name="texture" value={formData.texture} onChange={handleInputChange} placeholder="e.g. Raw, Unprocessed" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Lace</label>
+                    <input name="lace" value={formData.lace} onChange={handleInputChange} placeholder="e.g. Ultra-Thin HD" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Longevity</label>
+                    <input name="longevity" value={formData.longevity} onChange={handleInputChange} placeholder="e.g. 2-3+ Years" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Styling</label>
+                    <input name="styling" value={formData.styling} onChange={handleInputChange} placeholder="e.g. Takes Bleach & Heat" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Product Image {editingProductId && '(Optional)'}</label>

@@ -24,6 +24,22 @@ const productSchema = new mongoose.Schema({
   brand: { 
     type: String 
   },
+  texture: {
+    type: String,
+    default: 'Raw, Unprocessed'
+  },
+  lace: {
+    type: String,
+    default: 'Ultra-Thin HD'
+  },
+  longevity: {
+    type: String,
+    default: '2-3+ Years'
+  },
+  styling: {
+    type: String,
+    default: 'Takes Bleach & Heat'
+  },
   isFeatured: { 
     type: Boolean, 
     default: false 

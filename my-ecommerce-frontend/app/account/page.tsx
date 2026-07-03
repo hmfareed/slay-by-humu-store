@@ -244,7 +244,7 @@ export default function AccountPage() {
             
             {/* WhatsApp Button */}
             <Link 
-              href="https://wa.me/233502002904"
+              href="https://wa.me/233544886256"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 py-4 bg-[#25D366] hover:bg-[#20bd5c] text-white rounded-2xl shadow-soft transition-colors"
