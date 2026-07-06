@@ -2,8 +2,20 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { API_URL } from '@/src/lib/api';
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  const [frontendUrl, setFrontendUrl] = useState('http://localhost:3000');
+  const [backendUrl, setBackendUrl] = useState('http://localhost:5000');
+
+  useEffect(() => {
+    setMounted(true);
+    setFrontendUrl(window.location.origin);
+    setBackendUrl(API_URL.replace('/api', ''));
+  }, []);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navbar */}
@@ -38,8 +50,8 @@ export default function Home() {
       {/* Status Info */}
       <div className="max-w-7xl mx-auto px-6 py-20 text-center">
         <p className="text-gray-600 text-xl">
-          Backend running on <span className="font-mono font-medium text-black">http://localhost:5000</span><br />
-          Frontend running on <span className="font-mono font-medium text-black">http://localhost:3000</span>
+          Backend running on <span className="font-mono font-medium text-black">{mounted ? backendUrl : 'Loading...'}</span><br />
+          Frontend running on <span className="font-mono font-medium text-black">{mounted ? frontendUrl : 'Loading...'}</span>
         </p>
       </div>
     </div>
