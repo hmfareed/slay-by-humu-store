@@ -42,6 +42,9 @@ const initializePayment = async (req, res) => {
         amount: amountInPesewas,
         currency: 'GHS',
         reference: `SBH-${orderId}-${Date.now()}`,
+        // Pass transaction fees to the customer — Paystack adds the fee
+        // on top of the charged amount so the merchant receives the full total.
+        bearer: 'subaccount',
         metadata: {
           orderId: orderId.toString(),
           userId: userId.toString(),

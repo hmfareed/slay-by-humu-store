@@ -26,6 +26,7 @@ interface Product {
   lace?: string;
   longevity?: string;
   styling?: string;
+  badge?: string;
 }
 
 export default function ProductDetailPage() {
@@ -167,7 +168,7 @@ export default function ProductDetailPage() {
             </AnimatePresence>
             <div className="absolute top-6 left-6 flex gap-2">
               <span className="bg-brand-panel/80  px-4 py-1.5 rounded-full text-xs font-sans font-semibold uppercase tracking-widest border border-brand-text/10 shadow-soft">
-                100% Raw Hair
+                {product.badge || '100% Raw Hair'}
               </span>
             </div>
             {/* Instruction tooltip */}

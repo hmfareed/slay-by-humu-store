@@ -40,6 +40,10 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'Takes Bleach & Heat'
   },
+  badge: {
+    type: String,
+    default: '100% Raw Hair'
+  },
   isFeatured: { 
     type: Boolean, 
     default: false 

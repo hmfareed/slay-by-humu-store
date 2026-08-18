@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from 'react';
 import SearchBar from '@/components/SearchBar';
 import QuickViewModal from '@/components/QuickViewModal';
 import Footer from '@/components/Footer';
+import HomePageSkeleton from '@/components/HomePageSkeleton';
 
 interface Product {
   _id: string;
@@ -33,6 +34,7 @@ export default function HomePage() {
   const cartItemsCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [heroIndex, setHeroIndex] = useState(0);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
@@ -52,6 +54,8 @@ export default function HomePage() {
         }
       } catch (error) {
         console.error('Failed to fetch products:', error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchProducts();
@@ -98,7 +102,7 @@ export default function HomePage() {
 
   const currentHeroProduct = products[heroIndex];
 
-  if (!mounted) return null;
+  if (!mounted || loading) return <HomePageSkeleton />;
 
   return (
     <div className="relative font-sans bg-brand-bg text-brand-text min-h-screen">

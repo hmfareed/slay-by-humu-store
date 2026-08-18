@@ -80,3 +80,32 @@ h1, h2, h3, h4, h5, h6 {
 .shadow-luxury {
   box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.08);
 }
+
+/* ─── Skeleton Loading Shimmer ─── */
+@keyframes skeleton-wave {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-panel) 25%,
+    color-mix(in srgb, var(--bg-panel) 60%, var(--text-main) 8%) 50%,
+    var(--bg-panel) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-wave 1.6s ease-in-out infinite;
+}
+
+/* Lighter variant for content overlaid on dark hero bg */
+.skeleton-shimmer-light {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.10) 25%,
+    rgba(255,255,255,0.22) 50%,
+    rgba(255,255,255,0.10) 75%
+  );
+  background-size: 800px 100%;
+  animation: skeleton-wave 1.6s ease-in-out infinite;
+}

@@ -17,6 +17,7 @@ interface Product {
   lace?: string;
   longevity?: string;
   styling?: string;
+  badge?: string;
 }
 
 const STORE_CATEGORIES = ['Straight', 'Curly', 'Wavy', 'Short', 'Long'];
@@ -43,6 +44,7 @@ export default function AdminProductsPage() {
     lace: '',
     longevity: '',
     styling: '',
+    badge: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
@@ -59,6 +61,7 @@ export default function AdminProductsPage() {
       lace: '',
       longevity: '',
       styling: '',
+      badge: '',
     });
     setImageFile(null);
     setEditingProductId(null);
@@ -111,6 +114,7 @@ export default function AdminProductsPage() {
     data.append('lace', formData.lace);
     data.append('longevity', formData.longevity);
     data.append('styling', formData.styling);
+    data.append('badge', formData.badge);
     if (imageFile) {
       data.append('images', imageFile);   
     }
@@ -157,6 +161,7 @@ export default function AdminProductsPage() {
       lace: product.lace || '',
       longevity: product.longevity || '',
       styling: product.styling || '',
+      badge: product.badge || '',
     });
     setIsModalOpen(true);
   };
@@ -423,6 +428,10 @@ export default function AdminProductsPage() {
                   <div>
                     <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Styling</label>
                     <input name="styling" value={formData.styling} onChange={handleInputChange} placeholder="e.g. Takes Bleach & Heat" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Image Badge <span className="text-zinc-400 font-normal">(shown on product image)</span></label>
+                    <input name="badge" value={formData.badge} onChange={handleInputChange} placeholder="e.g. 100% Raw Hair" className="w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium mb-2 text-zinc-700 dark:text-zinc-300">Product Image {editingProductId && '(Optional)'}</label>
