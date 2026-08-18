@@ -42,6 +42,16 @@ const orderSchema = new mongoose.Schema({
   paystackReference: {
     type: String,
     default: null
+  },
+  // The Paystack processing fee (1.95%) added on top and paid by the customer
+  processingFee: {
+    type: Number,
+    default: 0
+  },
+  // The gross amount charged to the customer (totalAmount + processingFee)
+  chargedAmount: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 

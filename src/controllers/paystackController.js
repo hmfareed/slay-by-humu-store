@@ -28,8 +28,23 @@ const initializePayment = async (req, res) => {
       return res.status(400).json({ message: 'This order is already paid' });
     }
 
+    // ── Paystack fee pass-through ────────────────────────────────────────────
+    // Paystack Ghana charges 1.95% per transaction (no flat fee for GHS).
+    // To ensure the store always nets the full product total, we calculate the
+    // gross amount the customer must pay using the inverse formula:
+    //   chargedAmount = productTotal / (1 - 0.0195)
+    // After Paystack deducts its 1.95%, the merchant receives exactly productTotal.
+    const PAYSTACK_RATE = 0.0195;
+    const productTotal = order.totalAmount;
+    const chargedAmount = parseFloat((productTotal / (1 - PAYSTACK_RATE)).toFixed(2));
+    const processingFee = parseFloat((chargedAmount - productTotal).toFixed(2));
+
     // Paystack requires amount in smallest currency unit (pesewas for GHS)
-    const amountInPesewas = Math.round(order.totalAmount * 100);
+    const amountInPesewas = Math.round(chargedAmount * 100);
+
+    // Persist fee details on the order for accounting / admin visibility
+    order.processingFee = processingFee;
+    order.chargedAmount = chargedAmount;
 
     // Get user email from the decoded JWT token
     const User = require('../models/User');
@@ -39,16 +54,17 @@ const initializePayment = async (req, res) => {
       `${PAYSTACK_BASE}/transaction/initialize`,
       {
         email: user.email,
+        // Gross amount — after Paystack's 1.95% fee the store nets productTotal
         amount: amountInPesewas,
         currency: 'GHS',
         reference: `SBH-${orderId}-${Date.now()}`,
-        // Pass transaction fees to the customer — Paystack adds the fee
-        // on top of the charged amount so the merchant receives the full total.
-        bearer: 'subaccount',
         metadata: {
           orderId: orderId.toString(),
           userId: userId.toString(),
           customerName: user.name,
+          productTotal: productTotal.toFixed(2),
+          processingFee: processingFee.toFixed(2),
+          chargedAmount: chargedAmount.toFixed(2),
         },
         callback_url: `${process.env.FRONTEND_URL}/checkout/success`,
       },
@@ -72,6 +88,8 @@ const initializePayment = async (req, res) => {
       access_code,
       reference,
       orderId,
+      processingFee,
+      chargedAmount,
     });
   } catch (error) {
     console.error('Paystack initialize error:', error.response?.data || error.message);

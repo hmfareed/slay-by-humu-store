@@ -38,6 +38,13 @@ export default function CheckoutPage() {
   const clearCart = useCartStore((state) => state.clearCart);
   const totalPrice = useCartStore((state) => state.getTotalPrice());
 
+  // Paystack Ghana fee: 1.95% (no flat fee for GHS).
+  // We pass the fee to the customer so the store always nets the full product total.
+  // Formula: grossTotal = productTotal / (1 - 0.0195)
+  const PAYSTACK_RATE = 0.0195;
+  const paystackFee = parseFloat((totalPrice * PAYSTACK_RATE / (1 - PAYSTACK_RATE)).toFixed(2));
+  const grandTotal = parseFloat((totalPrice + paystackFee).toFixed(2));
+
   // Fetch saved addresses and auto-fill default
   useEffect(() => {
     if (!token) return;
@@ -317,7 +324,7 @@ export default function CheckoutPage() {
             {/* Order total pill */}
             <div className="bg-brand-panel border border-brand-text/10 rounded-2xl px-8 py-4 flex items-center gap-4 shadow-soft">
               <span className="text-brand-muted text-xs font-sans uppercase tracking-widest">Order Total</span>
-              <span className="text-brand-accent font-bold text-xl font-sans">₵{totalPrice.toFixed(2)}</span>
+              <span className="text-brand-accent font-bold text-xl font-sans">₵{grandTotal.toFixed(2)}</span>
             </div>
 
             {/* Powered by Paystack */}
@@ -568,10 +575,29 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="border-t border-brand-text/10 pt-8 mb-10">
-                <div className="flex justify-between text-3xl font-sans font-medium tracking-tight">
-                  <span>Total</span>
+              <div className="border-t border-brand-text/10 pt-8 mb-10 space-y-4">
+                {/* Subtotal */}
+                <div className="flex justify-between text-base font-sans text-brand-muted">
+                  <span>Subtotal</span>
                   <span>₵{totalPrice.toFixed(2)}</span>
+                </div>
+                {/* Paystack processing fee — paid by customer */}
+                <div className="flex justify-between text-sm font-sans text-brand-muted">
+                  <span className="flex items-center gap-1.5">
+                    Processing Fee
+                    <span
+                      title="Paystack charges a 1.95% transaction fee which is added to your order total."
+                      className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-brand-muted/40 text-[10px] cursor-help"
+                    >
+                      ?
+                    </span>
+                  </span>
+                  <span>₵{paystackFee.toFixed(2)}</span>
+                </div>
+                {/* Grand total */}
+                <div className="flex justify-between text-3xl font-sans font-medium tracking-tight border-t border-brand-text/10 pt-4">
+                  <span>Total</span>
+                  <span>₵{grandTotal.toFixed(2)}</span>
                 </div>
               </div>
 
