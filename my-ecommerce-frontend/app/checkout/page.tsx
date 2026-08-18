@@ -21,6 +21,7 @@ export default function CheckoutPage() {
     phoneNumber: '',
   });
   const [loading, setLoading] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [paystackOrderId, setPaystackOrderId] = useState(''); // set when order is created for Paystack
@@ -173,9 +174,11 @@ export default function CheckoutPage() {
         return;
       }
 
-      // 3. Clear cart and redirect to Paystack
-      clearCart();
-      window.location.href = paystackData.authorization_url;
+      // 3. Show premium loading screen, then redirect to Paystack
+      setRedirecting(true);
+      setTimeout(() => {
+        window.location.href = paystackData.authorization_url;
+      }, 2200);
 
     } catch (error) {
       console.error('Order error:', error);
@@ -228,17 +231,132 @@ export default function CheckoutPage() {
     );
   }
 
-  if (cartItems.length === 0) {
+  // ── Premium Payment Loading Overlay ──────────────────────────────────
+  if (redirecting) {
     return (
-      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-        <motion.div 
+      <AnimatePresence>
+        <motion.div
+          key="payment-loading"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center"
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[999] bg-brand-bg flex flex-col items-center justify-center px-6"
         >
-          <h2 className="text-4xl font-light mb-8 tracking-tight font-sans text-brand-muted">Your collection is empty.</h2>
-          <Link href="/products" className="btn-primary px-12 py-5 shadow-soft">
-            Curate Pieces
+          {/* Background glow */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-accent/10 rounded-full blur-[120px]" />
+          </div>
+
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className="relative z-10 flex flex-col items-center text-center max-w-sm"
+          >
+            {/* Animated lock icon */}
+            <div className="relative mb-10">
+              <motion.div
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
+                className="w-24 h-24 rounded-full bg-brand-accent flex items-center justify-center shadow-2xl shadow-brand-accent/40"
+              >
+                <svg className="w-11 h-11 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </motion.div>
+              {/* Ripple rings */}
+              {[0, 1].map((i) => (
+                <motion.div
+                  key={i}
+                  className="absolute inset-0 rounded-full border-2 border-brand-accent/30"
+                  animate={{ scale: [1, 1.8], opacity: [0.6, 0] }}
+                  transition={{ duration: 1.8, repeat: Infinity, delay: i * 0.9, ease: 'easeOut' }}
+                />
+              ))}
+            </div>
+
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tighter mb-3 text-brand-text">
+              Preparing your payment
+            </h2>
+            <p className="text-brand-muted font-sans font-light text-base mb-12">
+              You&apos;re being securely redirected to complete your order.
+            </p>
+
+            {/* Step indicators */}
+            <div className="w-full space-y-4 mb-12">
+              {[
+                { label: 'Order secured', delay: 0 },
+                { label: 'Details encrypted', delay: 0.5 },
+                { label: 'Connecting to payment gateway', delay: 1.0 },
+              ].map((step, i) => (
+                <motion.div
+                  key={step.label}
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: step.delay, duration: 0.4 }}
+                  className="flex items-center gap-4"
+                >
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: step.delay + 0.2, type: 'spring', stiffness: 300 }}
+                    className="w-6 h-6 rounded-full bg-brand-accent/15 border border-brand-accent/40 flex items-center justify-center flex-shrink-0"
+                  >
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ delay: step.delay + 0.4 }}
+                      className="w-2 h-2 rounded-full bg-brand-accent"
+                    />
+                  </motion.div>
+                  <span className="text-sm font-sans text-brand-muted font-light tracking-wide">{step.label}</span>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Order total pill */}
+            <div className="bg-brand-panel border border-brand-text/10 rounded-2xl px-8 py-4 flex items-center gap-4 shadow-soft">
+              <span className="text-brand-muted text-xs font-sans uppercase tracking-widest">Order Total</span>
+              <span className="text-brand-accent font-bold text-xl font-sans">₵{totalPrice.toFixed(2)}</span>
+            </div>
+
+            {/* Powered by Paystack */}
+            <p className="mt-8 text-[11px] text-brand-muted/60 font-sans tracking-wide">
+              Secured by Paystack · 256-bit SSL Encryption
+            </p>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-brand-bg flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center max-w-md"
+        >
+          {/* Bag icon */}
+          <div className="w-24 h-24 rounded-full bg-brand-panel border border-brand-text/10 flex items-center justify-center mx-auto mb-8 shadow-soft">
+            <svg className="w-10 h-10 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+            </svg>
+          </div>
+
+          <h2 className="text-3xl font-bold tracking-tight mb-3 text-brand-text">Your bag is empty</h2>
+          <p className="text-brand-muted font-sans font-light text-base mb-10 leading-relaxed">
+            Looks like you haven&apos;t added anything yet.<br />
+            Browse our collection and find your perfect piece.
+          </p>
+
+          <Link href="/products" className="btn-gold inline-flex items-center gap-3 px-10 py-4 shadow-soft text-sm">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            Continue Shopping
           </Link>
         </motion.div>
       </div>
@@ -466,11 +584,11 @@ export default function CheckoutPage() {
                 {loading ? (
                   <span className="relative z-10 flex items-center justify-center gap-3">
                     <span className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                    Connecting to Payment...
+                    Processing...
                   </span>
                 ) : (
                   <span className="relative z-10 flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     Proceed to Payment
                   </span>
                 )}
