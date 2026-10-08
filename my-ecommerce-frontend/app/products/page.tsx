@@ -92,7 +92,11 @@ function ProductsContent() {
       <nav className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button className="hover:text-brand-accent transition-colors">
+            <button
+              onClick={() => window.dispatchEvent(new Event('open-nav-menu'))}
+              className="p-2 -ml-2 rounded-full hover:bg-brand-panel hover:text-brand-accent transition-colors flex items-center justify-center text-brand-text"
+              aria-label="Open menu"
+            >
               <Menu className="w-6 h-6" />
             </button>
             <Link href="/" className="text-3xl font-serif font-bold tracking-tighter text-brand-accent">

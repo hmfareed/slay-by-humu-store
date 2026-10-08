@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import SmoothScroll from "@/components/SmoothScroll";
 import SlideOutCart from "@/components/SlideOutCart";
+import SlideOutNav from "@/components/SlideOutNav";
 import BottomNav from "@/components/BottomNav";
 import { NotificationProvider } from "@/src/context/NotificationContext";
 import { AuthProvider } from "@/src/context/AuthContext";
@@ -40,6 +41,7 @@ export default function RootLayout({
                 <SmoothScroll>
                   {children}
                   <SlideOutCart />
+                  <SlideOutNav />
                   <BottomNav />
                 </SmoothScroll>
               </LanguageProvider>

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/src/context/AuthContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ShoppingBag, User, Menu } from 'lucide-react';
+import { ShoppingBag, User, Menu, ArrowLeft } from 'lucide-react';
 import ImageLoupe from '@/components/ImageLoupe';
 import MagneticButton from '@/components/MagneticButton';
 import ProductReviews from '@/components/ProductReviews';
@@ -111,13 +111,30 @@ export default function ProductDetailPage() {
     window.dispatchEvent(new Event('open-mini-cart'));
   };
 
+  const handleBack = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push('/products');
+    }
+  };
+
+  const handleOpenNav = () => {
+    window.dispatchEvent(new Event('open-nav-menu'));
+  };
+
   return (
     <div className="min-h-screen bg-brand-bg text-brand-text flex flex-col">
       {/* Luxury Navbar */}
-      <nav className="sticky top-0 z-50 bg-brand-bg  border-b border-brand-text/5">
+      <nav className="sticky top-0 z-50 bg-brand-bg border-b border-brand-text/5 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-5 flex justify-between items-center">
           <div className="flex items-center gap-4">
-            <button className="hover:text-brand-accent transition-colors">
+            <button
+              onClick={handleOpenNav}
+              className="p-1 -ml-1 rounded-full hover:text-brand-accent transition-colors flex items-center justify-center text-brand-text"
+              aria-label="Open menu"
+              title="Open menu"
+            >
               <Menu className="w-6 h-6" />
             </button>
             <Link href="/" className="text-3xl font-serif font-bold tracking-tighter text-brand-accent">
@@ -125,7 +142,7 @@ export default function ProductDetailPage() {
             </Link>
           </div>
           
-          <div className="flex gap-6 items-center">
+          <div className="flex gap-4 md:gap-6 items-center">
             <Link href="/login" className="hover:text-brand-accent transition-colors">
               <User className="w-6 h-6" />
             </Link>
@@ -137,8 +154,19 @@ export default function ProductDetailPage() {
         </div>
       </nav>
 
+      {/* Breadcrumb / Back Navigation Bar */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12 pt-6 md:pt-8 w-full">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 text-xs font-sans font-semibold uppercase tracking-[0.2em] text-brand-muted hover:text-brand-accent transition-colors group py-1"
+        >
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1 text-brand-accent" />
+          <span>Back to previous page</span>
+        </button>
+      </div>
+
       {/* Main Content */}
-      <div className="flex-1 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-16 md:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 md:gap-24 items-start w-full">
+      <div className="flex-1 max-w-7xl mx-auto px-4 md:px-8 lg:px-12 py-8 md:py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 md:gap-20 items-start w-full">
         
         {/* Left: Image Gallery */}
         <motion.div 

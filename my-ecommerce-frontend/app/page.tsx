@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight, Package, Sparkles, ShieldCheck } from 'lucide-react';
+import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight, Package, Sparkles, ShieldCheck, Menu } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
 import { useEffect, useState, useCallback } from 'react';
@@ -119,9 +119,19 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           {/* Top bar */}
           <div className="flex items-center justify-between py-5">
-            <Link href="/" className="text-3xl md:text-4xl font-serif font-bold tracking-tighter text-brand-accent">
-              SLAY BY HUMU
-            </Link>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new Event('open-nav-menu'))}
+                className="p-2 -ml-2 rounded-full hover:bg-brand-panel hover:text-brand-accent transition-colors flex items-center justify-center text-brand-text"
+                aria-label="Open menu"
+                title="Open menu"
+              >
+                <Menu className="w-6 h-6" />
+              </button>
+              <Link href="/" className="text-3xl md:text-4xl font-serif font-bold tracking-tighter text-brand-accent">
+                SLAY BY HUMU
+              </Link>
+            </div>
 
             <div className="flex items-center gap-6">
               <Link href="/account" className="hover:text-brand-accent transition-colors">
