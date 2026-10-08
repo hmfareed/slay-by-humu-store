@@ -6,6 +6,9 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "dev:backend": "node src/server.js",
+    "dev:frontend": "npm --prefix my-ecommerce-frontend run dev",
+    "dev:all": "concurrently -n \"backend,frontend\" -c \"cyan,magenta\" \"npm run dev\" \"npm run dev:frontend\"",
     "deploy": "vercel --prod --cwd my-ecommerce-frontend",
     "deploy:preview": "vercel --cwd my-ecommerce-frontend"
   },
@@ -23,6 +26,7 @@
     "socket.io": "^4.8.3"
   },
   "devDependencies": {
+    "concurrently": "^10.0.6",
     "nodemon": "^3.1.9"
   }
 }

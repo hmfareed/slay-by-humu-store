@@ -38,28 +38,36 @@ export default function HomePage() {
   const [heroIndex, setHeroIndex] = useState(0);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   // Fetch products from API
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_URL}/products`);
+      if (res.ok) {
+        const data: Product[] = await res.json();
+        // Filter to only products with images (real wigs, not test data)
+        const realProducts = data.filter(
+          (p) => p.images && p.images.length > 0 && p.images[0].startsWith('http')
+        );
+        setProducts(realProducts);
+      } else {
+        throw new Error(`Server returned status ${res.status}`);
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch products:', err);
+      setError(err?.message || 'Failed to connect to backend server');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setMounted(true);
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${API_URL}/products`);
-        if (res.ok) {
-          const data: Product[] = await res.json();
-          // Filter to only products with images (real wigs, not test data)
-          const realProducts = data.filter(
-            (p) => p.images && p.images.length > 0 && p.images[0].startsWith('http')
-          );
-          setProducts(realProducts);
-        }
-      } catch (error) {
-        console.error('Failed to fetch products:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProducts();
-  }, []);
+  }, [fetchProducts]);
 
   // Auto-rotate hero every 3 seconds
   useEffect(() => {
@@ -137,9 +145,29 @@ export default function HomePage() {
         </div>
       </header>
 
+      {/* ─── ERROR BANNER (if backend is offline) ─── */}
+      {error && (
+        <div className="max-w-4xl mx-auto my-6 px-4">
+          <div className="p-5 bg-red-500/10 border border-red-500/20 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <p className="text-red-400 font-semibold text-sm mb-1">Cannot reach backend API ({API_URL})</p>
+              <p className="text-brand-muted text-xs">
+                Ensure the backend server is running (<code className="bg-black/30 text-brand-text px-1.5 py-0.5 rounded text-[11px]">npm run dev</code> from root directory).
+              </p>
+            </div>
+            <button
+              onClick={fetchProducts}
+              className="px-5 py-2.5 bg-brand-accent text-white rounded-full text-xs font-semibold uppercase tracking-wider hover:bg-amber-600 transition-colors whitespace-nowrap"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ─── HERO SLIDESHOW: Auto-rotating product images every 3s ─── */}
-      <section className="relative w-full overflow-hidden bg-brand-panel" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
-        {currentHeroProduct && (
+      {currentHeroProduct ? (
+        <section className="relative w-full overflow-hidden bg-brand-panel" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
           <div key={currentHeroProduct._id} className="absolute inset-0">
             <img
               src={currentHeroProduct.images[0]}
@@ -173,41 +201,53 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Slide controls */}
-        {products.length > 1 && (
-          <>
-            <button
-              onClick={() => goToSlide('prev')}
-              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => goToSlide('next')}
-              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          {/* Slide controls */}
+          {products.length > 1 && (
+            <>
+              <button
+                onClick={() => goToSlide('prev')}
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => goToSlide('next')}
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
 
-            {/* Dot indicators */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-              {products.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setHeroIndex(i)}
-                  className={`transition-all duration-300 rounded-full ${
-                    i === heroIndex
-                      ? 'w-8 h-2 bg-brand-accent'
-                      : 'w-2 h-2 bg-white/40 hover:bg-white/60'
-                  }`}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </section>
+              {/* Dot indicators */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+                {products.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setHeroIndex(i)}
+                    className={`transition-all duration-300 rounded-full ${
+                      i === heroIndex
+                        ? 'w-8 h-2 bg-brand-accent'
+                        : 'w-2 h-2 bg-white/40 hover:bg-white/60'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+      ) : (
+        <section className="relative w-full py-20 md:py-28 px-4 md:px-8 text-center bg-brand-panel border-b border-brand-text/5 flex flex-col items-center justify-center">
+          <span className="text-brand-accent text-xs font-sans uppercase tracking-[0.3em] mb-3">Exquisite Luxury</span>
+          <h2 className="text-4xl md:text-5xl font-serif text-brand-text mb-4">SLAY BY HUMU</h2>
+          <p className="text-brand-muted max-w-md mx-auto mb-8 font-light text-sm">
+            Curated raw hair collections crafted for unmatched beauty and elegance.
+          </p>
+          <Link href="/products" className="btn-gold px-8 py-3.5 rounded-full text-xs font-semibold uppercase tracking-widest inline-flex items-center gap-2">
+            Explore All Products
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </section>
+      )}
 
       {/* ─── CATEGORY PILLS ─── */}
       <section className="py-10 md:py-14 px-4 md:px-8 lg:px-12 max-w-7xl mx-auto">

@@ -18,7 +18,9 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
+    /^http:\/\/localhost:\d+$/,
     'http://localhost:3000',
+    'http://localhost:3001',
     'https://my-ecommerce-frontend-omega.vercel.app',
     /fareeds-projects.*\.vercel\.app$/,
     /my-ecommerce-frontend.*\.vercel\.app$/,
@@ -58,7 +60,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
+      /^http:\/\/localhost:\d+$/,
       'http://localhost:3000',
+      'http://localhost:3001',
       'https://my-ecommerce-frontend-omega.vercel.app',
       /\.vercel\.app$/
     ],
