@@ -131,7 +131,7 @@ export default function ProductDetailPage() {
           <div className="flex items-center gap-4">
             <button
               onClick={handleOpenNav}
-              className="p-1 -ml-1 rounded-full hover:text-brand-accent transition-colors flex items-center justify-center text-brand-text"
+              className="hidden md:flex p-1 -ml-1 rounded-full hover:text-brand-accent transition-colors items-center justify-center text-brand-text"
               aria-label="Open menu"
               title="Open menu"
             >

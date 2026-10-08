@@ -122,7 +122,7 @@ export default function HomePage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new Event('open-nav-menu'))}
-                className="p-2 -ml-2 rounded-full hover:bg-brand-panel hover:text-brand-accent transition-colors flex items-center justify-center text-brand-text"
+                className="hidden md:flex p-2 -ml-2 rounded-full hover:bg-brand-panel hover:text-brand-accent transition-colors items-center justify-center text-brand-text"
                 aria-label="Open menu"
                 title="Open menu"
               >

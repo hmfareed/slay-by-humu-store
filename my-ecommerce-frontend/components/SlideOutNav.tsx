@@ -54,7 +54,7 @@ export default function SlideOutNav() {
   if (!mounted || !isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[160] flex justify-start">
+    <div className="fixed inset-0 z-[160] hidden md:flex justify-start">
       {/* Backdrop */}
       <div
         onClick={handleClose}
