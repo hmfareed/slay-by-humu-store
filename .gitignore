@@ -7,3 +7,4 @@ my-ecommerce-frontend/.env.local
 
 .vercel
 .env*.local
+.env*
