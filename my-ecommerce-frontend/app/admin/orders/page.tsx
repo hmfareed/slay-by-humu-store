@@ -3,7 +3,22 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Package, MapPin, CreditCard, User, Calendar, AlertTriangle, AlertCircle, RefreshCw, Eye } from 'lucide-react';
+import { 
+  Search, 
+  X, 
+  Package, 
+  MapPin, 
+  CreditCard, 
+  User, 
+  Calendar, 
+  AlertTriangle, 
+  AlertCircle, 
+  RefreshCw, 
+  Eye, 
+  Trash2, 
+  Ban,
+  CheckCircle2 
+} from 'lucide-react';
 
 interface Order {
   _id: string;
@@ -29,7 +44,23 @@ export default function AdminOrdersPage() {
   const [toDate, setToDate] = useState('');
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  
+  // Custom in-app dialog states (NO browser alerts or confirms)
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
+  const [isDeletingOrder, setIsDeletingOrder] = useState(false);
+  const [showPurgeAllConfirm, setShowPurgeAllConfirm] = useState(false);
+  const [isPurgingAll, setIsPurgingAll] = useState(false);
+  
+  // In-app floating toast notifications
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.message === message ? null : prev));
+    }, 4000);
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -101,18 +132,17 @@ export default function AdminOrdersPage() {
         setOrders(orders.map(order =>
           order._id === orderId ? { ...order, status: newStatus.toLowerCase() } : order
         ));
-        // Update the detail drawer if it's showing this order
         if (selectedOrder && selectedOrder._id === orderId) {
           setSelectedOrder({ ...selectedOrder, status: newStatus.toLowerCase() });
         }
+        showToast('success', `Status updated to ${newStatus}`);
       } else {
         const errorData = await res.json();
-        alert(`Failed to update status: ${errorData.message}`);
-        console.error('Failed to update status:', errorData);
+        showToast('error', errorData.message || 'Failed to update status');
       }
     } catch (error) {
       console.error('Update error:', error);
-      alert('Network error while updating status');
+      showToast('error', 'Network error while updating status');
     } finally {
       setUpdatingId(null);
     }
@@ -132,36 +162,69 @@ export default function AdminOrdersPage() {
           setSelectedOrder({ ...selectedOrder, status: 'cancelled' });
         }
         setOrderToCancel(null);
+        showToast('success', `Order #${orderId.substring(0, 8)} has been cancelled.`);
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to cancel');
+        showToast('error', data.message || 'Failed to cancel order');
       }
     } catch (error) {
       console.error(error);
+      showToast('error', 'Network error while cancelling order');
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleDeleteAllOrders = async () => {
-    if (window.confirm('Are you absolutely sure you want to delete ALL orders? This action cannot be undone.')) {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/orders/all`, {
-          method: 'DELETE',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          setOrders([]);
-          alert('All orders have been deleted.');
-        } else {
-          const data = await res.json();
-          alert(data.message || 'Failed to delete orders');
+  const handleDeleteSingleOrder = async (orderId: string) => {
+    setIsDeletingOrder(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/orders/${orderId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setOrders(prev => prev.filter(o => o._id !== orderId));
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(null);
         }
-      } catch (error) {
-        console.error(error);
-        alert('Network error while deleting orders');
+        setOrderToDelete(null);
+        showToast('success', `Order #${orderId.substring(0, 8)} deleted successfully.`);
+      } else {
+        showToast('error', data.message || 'Failed to delete order');
       }
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Network error while deleting order');
+    } finally {
+      setIsDeletingOrder(false);
+    }
+  };
+
+  const handlePurgeAllConfirm = async () => {
+    setIsPurgingAll(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_URL}/orders/all`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setOrders([]);
+        setShowPurgeAllConfirm(false);
+        setSelectedOrder(null);
+        showToast('success', 'All orders have been permanently purged.');
+      } else {
+        const data = await res.json();
+        showToast('error', data.message || 'Failed to purge orders');
+      }
+    } catch (error) {
+      console.error(error);
+      showToast('error', 'Network error while purging orders');
+    } finally {
+      setIsPurgingAll(false);
     }
   };
 
@@ -189,7 +252,36 @@ export default function AdminOrdersPage() {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 relative">
+      {/* In-App Floating Toast Notification (System Popup) */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold uppercase tracking-wider backdrop-blur-md ${
+              notification.type === 'success'
+                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-[#C5A059]/40'
+                : 'bg-rose-950/95 text-rose-200 border-rose-800'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-[#C5A059] flex-shrink-0" />
+            ) : (
+              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+            )}
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)} 
+              className="ml-2 p-1 text-zinc-400 hover:text-white dark:hover:text-zinc-900 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -201,11 +293,12 @@ export default function AdminOrdersPage() {
           </p>
         </div>
         <button 
-          onClick={handleDeleteAllOrders}
-          className="bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-150 flex items-center gap-2 active:scale-[0.98] self-start sm:self-auto"
+          onClick={() => setShowPurgeAllConfirm(true)}
+          disabled={orders.length === 0}
+          className="bg-rose-500/10 hover:bg-rose-500 hover:text-white text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all duration-150 flex items-center gap-2 active:scale-[0.98] self-start sm:self-auto disabled:opacity-40"
         >
           <AlertTriangle size={15} />
-          Purge Orders
+          Purge All Orders
         </button>
       </div>
 
@@ -282,8 +375,103 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Orders Table */}
-      <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
+      {/* Mobile Card Layout */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {loading ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
+                <div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                <div className="h-3 w-40 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+                <div className="h-10 bg-zinc-100 dark:bg-zinc-800/40 rounded-xl"></div>
+              </div>
+            ))}
+          </>
+        ) : filteredOrders.length === 0 ? (
+          <div className="py-16 text-center text-zinc-500 text-sm">No orders match your filter.</div>
+        ) : (
+          filteredOrders.map((order) => (
+            <div key={order._id} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <span className="font-mono text-xs font-bold text-zinc-900 dark:text-white tabular-nums">
+                    #{order._id.substring(0, 8)}
+                  </span>
+                  <p className="font-semibold text-zinc-900 dark:text-white text-sm mt-0.5">
+                    {order.user?.name || 'Guest Checkout'}
+                  </p>
+                  <p className="text-xs text-zinc-500">{order.user?.email || 'N/A'}</p>
+                </div>
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${statusBadge(order.status)}`}>
+                  {order.status}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center py-2.5 border-y border-zinc-100 dark:border-zinc-800/60">
+                <span className="text-xs text-zinc-500 tabular-nums">
+                  {new Date(order.createdAt).toLocaleDateString()}
+                </span>
+                <span className="font-mono font-bold text-zinc-900 dark:text-white tabular-nums text-sm">
+                  ₵{Number(order.totalAmount || 0).toLocaleString()}
+                </span>
+              </div>
+
+              {/* Mobile Actions: Icon Buttons with Tooltips */}
+              <div className="flex items-center justify-end gap-2 pt-1">
+                {/* View Icon Button */}
+                <div className="relative group/tooltip">
+                  <button
+                    onClick={() => setSelectedOrder(order)}
+                    aria-label="View Order"
+                    className="w-9 h-9 flex items-center justify-center bg-zinc-100 dark:bg-zinc-800/80 text-zinc-600 dark:text-zinc-300 hover:text-[#C5A059] active:scale-90 rounded-xl transition-all"
+                  >
+                    <Eye size={16} />
+                  </button>
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                    View
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                  </div>
+                </div>
+
+                {/* Cancel Icon Button */}
+                {(order.status === 'pending' || order.status === 'processing') && (
+                  <div className="relative group/tooltip">
+                    <button
+                      onClick={() => setOrderToCancel(order._id)}
+                      aria-label="Cancel Order"
+                      className="w-9 h-9 flex items-center justify-center bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500 hover:text-white active:scale-90 rounded-xl transition-all"
+                    >
+                      <Ban size={15} />
+                    </button>
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                      Cancel
+                      <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                    </div>
+                  </div>
+                )}
+
+                {/* Delete Icon Button */}
+                <div className="relative group/tooltip">
+                  <button
+                    onClick={() => setOrderToDelete(order)}
+                    aria-label="Delete Order"
+                    className="w-9 h-9 flex items-center justify-center bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white active:scale-90 rounded-xl transition-all"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                    Delete
+                    <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Orders Table (PC Layout) */}
+      <div className="hidden md:block bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-zinc-50/80 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 text-xs uppercase tracking-wider font-semibold border-b border-zinc-100 dark:border-zinc-800/60">
@@ -299,7 +487,7 @@ export default function AdminOrdersPage() {
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
               {loading ? (
-                // 5-row skeleton loader matching exact table columns to eliminate CLS
+                // 5-row skeleton loader matching exact table columns
                 <>
                   {[1, 2, 3, 4, 5].map((i) => (
                     <tr key={i} className="animate-pulse">
@@ -323,7 +511,11 @@ export default function AdminOrdersPage() {
                         <div className="h-7 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="h-7 w-12 bg-zinc-200 dark:bg-zinc-800 rounded-lg ml-auto"></div>
+                        <div className="flex items-center justify-end gap-1.5 ml-auto">
+                          <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800"></div>
+                          <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800"></div>
+                          <div className="w-8 h-8 rounded-lg bg-zinc-200 dark:bg-zinc-800"></div>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -377,21 +569,56 @@ export default function AdminOrdersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5 text-zinc-600 dark:text-zinc-400">
-                        <button
-                          onClick={() => setSelectedOrder(order)}
-                          className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 hover:text-[#C5A059] hover:bg-[#C5A059]/10 rounded-lg active:scale-95 transition-all duration-150 inline-flex items-center gap-1"
-                        >
-                          <Eye size={13} /> View
-                        </button>
-                        {(order.status === 'pending' || order.status === 'processing') && (
+                      {/* PC Icon-Only Actions with Hover Tooltips */}
+                      <div className="flex items-center justify-end gap-1.5">
+                        
+                        {/* View Icon Button */}
+                        <div className="relative group/tooltip flex items-center justify-center">
                           <button
-                            onClick={() => setOrderToCancel(order._id)}
-                            className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg active:scale-95 transition-all duration-150"
+                            onClick={() => setSelectedOrder(order)}
+                            aria-label="View Order"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-zinc-500 hover:text-[#C5A059] hover:bg-[#C5A059]/10 active:scale-90 transition-all duration-150"
                           >
-                            Cancel
+                            <Eye size={16} />
                           </button>
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                            View
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                          </div>
+                        </div>
+
+                        {/* Cancel Icon Button */}
+                        {(order.status === 'pending' || order.status === 'processing') && (
+                          <div className="relative group/tooltip flex items-center justify-center">
+                            <button
+                              onClick={() => setOrderToCancel(order._id)}
+                              aria-label="Cancel Order"
+                              className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-90 transition-all duration-150"
+                            >
+                              <Ban size={15} />
+                            </button>
+                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                              Cancel
+                              <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                            </div>
+                          </div>
                         )}
+
+                        {/* Delete Icon Button */}
+                        <div className="relative group/tooltip flex items-center justify-center">
+                          <button
+                            onClick={() => setOrderToDelete(order)}
+                            aria-label="Delete Order"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:scale-90 transition-all duration-150"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                          <div className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 text-[10px] font-semibold uppercase tracking-wider rounded-md opacity-0 group-hover/tooltip:opacity-100 transition-all duration-150 pointer-events-none shadow-lg whitespace-nowrap z-30">
+                            Delete
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 -mt-px border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-100" />
+                          </div>
+                        </div>
+
                       </div>
                     </td>
                   </tr>
@@ -449,10 +676,10 @@ export default function AdminOrdersPage() {
                 {/* Products Ordered */}
                 <div>
                   <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <Package size={13} className="text-[#C5A059]" /> Purchased Items ({selectedOrder.items.length})
+                    <Package size={13} className="text-[#C5A059]" /> Purchased Items ({selectedOrder.items?.length || 0})
                   </h3>
                   <div className="space-y-3">
-                    {selectedOrder.items.map((item, i) => (
+                    {selectedOrder.items?.map((item, i) => (
                       <div key={i} className="flex items-center gap-3 bg-zinc-50/80 dark:bg-zinc-900/60 rounded-2xl p-3 border border-zinc-100 dark:border-zinc-800/60">
                         <div className="w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
                           {item.product?.images?.[0] ? (
@@ -535,14 +762,23 @@ export default function AdminOrdersPage() {
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                   </select>
-                  {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
+                  
+                  <div className="grid grid-cols-1 gap-2 pt-1">
+                    {(selectedOrder.status === 'pending' || selectedOrder.status === 'processing') && (
+                      <button
+                        onClick={() => setOrderToCancel(selectedOrder._id)}
+                        className="w-full py-3 bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-amber-100 dark:hover:bg-amber-500/20 active:scale-[0.98] transition-all border border-amber-200 dark:border-amber-500/20"
+                      >
+                        Cancel Order
+                      </button>
+                    )}
                     <button
-                      onClick={() => setOrderToCancel(selectedOrder._id)}
-                      className="w-full py-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-[0.98] transition-all border border-rose-200 dark:border-rose-500/20"
+                      onClick={() => setOrderToDelete(selectedOrder)}
+                      className="w-full py-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-semibold uppercase tracking-wider hover:bg-rose-100 dark:hover:bg-rose-500/20 active:scale-[0.98] transition-all border border-rose-200 dark:border-rose-500/20 flex items-center justify-center gap-2"
                     >
-                      Cancel Order
+                      <Trash2 size={14} /> Delete Order Permanently
                     </button>
-                  )}
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -550,7 +786,66 @@ export default function AdminOrdersPage() {
         )}
       </AnimatePresence>
 
-      {/* Cancellation Confirmation Modal */}
+      {/* Single Order Deletion Confirmation Dialog (System Modal Popup) */}
+      <AnimatePresence>
+        {orderToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeletingOrder && setOrderToDelete(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#121212] rounded-2xl p-7 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 mx-auto text-rose-600">
+                <Trash2 size={22} />
+              </div>
+              <div className="text-center mb-6">
+                <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Delete Order?</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+                  Are you sure you want to permanently delete order <span className="font-mono font-bold text-rose-500 tabular-nums">#{orderToDelete._id.substring(0, 8)}</span>
+                  {orderToDelete.user?.name ? <> for client <span className="font-semibold text-zinc-800 dark:text-zinc-200">{orderToDelete.user.name}</span></> : ''}
+                  {' '}totaling <span className="font-mono font-semibold text-zinc-900 dark:text-white tabular-nums">₵{Number(orderToDelete.totalAmount || 0).toLocaleString()}</span>?
+                </p>
+                <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-2.5">
+                  ⚠️ This action cannot be reversed.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => handleDeleteSingleOrder(orderToDelete._id)}
+                  disabled={isDeletingOrder}
+                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                >
+                  {isDeletingOrder ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Deleting Order...
+                    </>
+                  ) : (
+                    'Yes, Delete Order'
+                  )}
+                </button>
+                <button
+                  onClick={() => setOrderToDelete(null)}
+                  disabled={isDeletingOrder}
+                  className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-[0.98] text-zinc-900 dark:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                >
+                  No, Keep Order
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Cancellation Confirmation Dialog (System Modal Popup) */}
       <AnimatePresence>
         {orderToCancel && (
           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
@@ -562,25 +857,25 @@ export default function AdminOrdersPage() {
               className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             />
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
               className="relative w-full max-w-md bg-white dark:bg-[#121212] rounded-2xl p-7 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
             >
-              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 mx-auto text-rose-600">
+              <div className="w-12 h-12 rounded-full bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center mb-4 mx-auto text-amber-600">
                 <AlertTriangle size={22} />
               </div>
               <div className="text-center mb-6">
                 <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Cancel Transaction?</h3>
                 <p className="text-zinc-500 dark:text-zinc-400 text-xs">
-                  Are you sure you want to cancel order <span className="font-mono font-bold text-rose-500">#{orderToCancel.substring(0, 8)}</span>? This status update will be logged permanently.
+                  Are you sure you want to cancel order <span className="font-mono font-bold text-amber-500 tabular-nums">#{orderToCancel.substring(0, 8)}</span>? The client will be notified.
                 </p>
               </div>
               <div className="flex flex-col gap-2.5">
                 <button
                   onClick={() => handleCancelOrder(orderToCancel)}
                   disabled={!!updatingId}
-                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
                   {updatingId === orderToCancel ? (
                     <>
@@ -588,14 +883,71 @@ export default function AdminOrdersPage() {
                       Cancelling...
                     </>
                   ) : (
-                    'Confirm Cancellation'
+                    'Yes, Cancel Order'
                   )}
                 </button>
                 <button
                   onClick={() => setOrderToCancel(null)}
                   className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-[0.98] text-zinc-900 dark:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all"
                 >
-                  Return
+                  No, Return
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Purge All Orders Confirmation Dialog (System Modal Popup) */}
+      <AnimatePresence>
+        {showPurgeAllConfirm && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isPurgingAll && setShowPurgeAllConfirm(false)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#121212] rounded-2xl p-7 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 mx-auto text-rose-600">
+                <AlertTriangle size={22} />
+              </div>
+              <div className="text-center mb-6">
+                <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Purge Entire Ledger?</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+                  Are you sure you want to permanently erase <span className="font-mono font-bold text-rose-500 tabular-nums">{orders.length} orders</span> from the database? All records and historical transaction entries will be deleted.
+                </p>
+                <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-2.5">
+                  ⚠️ This cannot be undone.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={handlePurgeAllConfirm}
+                  disabled={isPurgingAll}
+                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                >
+                  {isPurgingAll ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Purging All Orders...
+                    </>
+                  ) : (
+                    'Yes, Purge All Orders'
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowPurgeAllConfirm(false)}
+                  disabled={isPurgingAll}
+                  className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-[0.98] text-zinc-900 dark:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                >
+                  No, Keep Orders
                 </button>
               </div>
             </motion.div>

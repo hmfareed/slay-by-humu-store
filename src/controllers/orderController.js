@@ -204,6 +204,27 @@ const cancelOrder = async (req, res) => {
   }
 };
 
+// @desc    Delete single order
+// @route   DELETE /api/orders/:id
+// @access  Private/Admin
+const deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Order deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete all orders
+// @route   DELETE /api/orders/all
+// @access  Private/Admin
 const deleteAllOrders = async (req, res) => {
   try {
     await Order.deleteMany({});
@@ -213,4 +234,13 @@ const deleteAllOrders = async (req, res) => {
   }
 };
 
-module.exports = { createOrder, getMyOrders, getOrderById, updateOrderStatus, getAllOrders, cancelOrder, deleteAllOrders };
+module.exports = { 
+  createOrder, 
+  getMyOrders, 
+  getOrderById, 
+  updateOrderStatus, 
+  getAllOrders, 
+  cancelOrder, 
+  deleteOrder,
+  deleteAllOrders 
+};

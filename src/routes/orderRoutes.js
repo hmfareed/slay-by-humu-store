@@ -1,5 +1,14 @@
 const express = require('express');
-const { createOrder, getMyOrders, getOrderById, updateOrderStatus, getAllOrders, cancelOrder, deleteAllOrders } = require('../controllers/orderController');
+const { 
+  createOrder, 
+  getMyOrders, 
+  getOrderById, 
+  updateOrderStatus, 
+  getAllOrders, 
+  cancelOrder, 
+  deleteOrder, 
+  deleteAllOrders 
+} = require('../controllers/orderController');
 const { protect, isAdmin, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,6 +21,7 @@ router.get('/', getMyOrders);
 router.get('/all', isAdmin, getAllOrders);
 router.delete('/all', isAdmin, deleteAllOrders);
 router.get('/:id', getOrderById);
+router.delete('/:id', isAdmin, deleteOrder);
 router.put('/:id/status', isAdmin, updateOrderStatus);
 router.put('/:id/cancel', cancelOrder);
 

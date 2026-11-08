@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
-import { Send, Users, User as UserIcon, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Send, Users, User as UserIcon, Loader2, AlertCircle, RefreshCw, CheckCircle2, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface User {
   _id: string;
@@ -21,6 +21,14 @@ export default function AdminMessagesPage() {
   const [message, setMessage] = useState('');
   const [targetUserId, setTargetUserId] = useState('all');
   const [isSending, setIsSending] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.message === message ? null : prev));
+    }, 4000);
+  };
 
   const fetchUsers = async () => {
     try {
@@ -72,7 +80,7 @@ export default function AdminMessagesPage() {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !message.trim()) {
-      alert('Please enter both title and message.');
+      showToast('error', 'Please provide both title and broadcast message copy.');
       return;
     }
 
@@ -90,30 +98,61 @@ export default function AdminMessagesPage() {
 
       if (res.status === 401) {
         localStorage.removeItem('token');
-        alert('Your session has expired. Please log in again.');
-        window.location.href = '/login?expired=true';
+        showToast('error', 'Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = '/login?expired=true';
+        }, 1200);
         return;
       }
 
       const data = await res.json();
       if (res.ok) {
-        alert(data.message || 'Message sent successfully!');
+        showToast('success', data.message || 'Broadcast message transmitted successfully!');
         setTitle('');
         setMessage('');
         setTargetUserId('all');
       } else {
-        alert(`Failed to send: ${data.message}`);
+        showToast('error', `Failed to dispatch: ${data.message}`);
       }
     } catch (error) {
       console.error('Error sending message:', error);
-      alert('Network error while sending message.');
+      showToast('error', 'Network error while dispatching broadcast.');
     } finally {
       setIsSending(false);
     }
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 relative">
+      {/* In-App Floating Toast Notification (System Popup) */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold uppercase tracking-wider backdrop-blur-md ${
+              notification.type === 'success'
+                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-[#C5A059]/40'
+                : 'bg-rose-950/95 text-rose-200 border-rose-800'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-[#C5A059] flex-shrink-0" />
+            ) : (
+              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+            )}
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)} 
+              className="ml-2 p-1 text-zinc-400 hover:text-white dark:hover:text-zinc-900 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div>
         <h1 className="font-serif text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">

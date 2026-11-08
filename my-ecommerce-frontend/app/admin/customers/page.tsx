@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import Link from 'next/link';
-import { Search, Eye, UserX, UserCheck, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, Eye, UserX, UserCheck, Trash2, AlertCircle, RefreshCw, CheckCircle2, X } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -24,6 +25,18 @@ export default function AdminCustomersPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  // System popup state (no browser confirm/alert)
+  const [userToDelete, setUserToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.message === message ? null : prev));
+    }, 4000);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -84,17 +97,20 @@ export default function AdminCustomersPage() {
       if (res.ok) {
         const data = await res.json();
         setUsers(users.map(u => u._id === userId ? { ...u, isActive: data.isActive } : u));
+        showToast('success', `Client status updated to ${data.isActive ? 'Active' : 'Disabled'}.`);
+      } else {
+        showToast('error', 'Failed to update client status');
       }
     } catch (error) {
       console.error('Toggle error:', error);
+      showToast('error', 'Network error while updating status');
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDelete = async (userId: string, name: string) => {
-    if (!confirm(`Are you sure you want to permanently delete ${name}? This cannot be undone.`)) return;
-    setActionLoading(userId);
+  const handleDeleteConfirmed = async (userId: string, name: string) => {
+    setIsDeletingUser(true);
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${API_URL}/users/${userId}`, {
@@ -103,14 +119,17 @@ export default function AdminCustomersPage() {
       });
       if (res.ok) {
         setUsers(users.filter(u => u._id !== userId));
+        setUserToDelete(null);
+        showToast('success', `Client account for ${name} has been permanently deleted.`);
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to delete user');
+        showToast('error', data.message || 'Failed to delete user');
       }
     } catch (error) {
       console.error('Delete error:', error);
+      showToast('error', 'Network error while deleting user');
     } finally {
-      setActionLoading(null);
+      setIsDeletingUser(false);
     }
   };
 
@@ -125,7 +144,36 @@ export default function AdminCustomersPage() {
   const disabledCustomers = users.filter(u => u.role === 'user' && !u.isActive).length;
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 relative">
+      {/* In-App Floating Toast Notification (System Popup) */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold uppercase tracking-wider backdrop-blur-md ${
+              notification.type === 'success'
+                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-[#C5A059]/40'
+                : 'bg-rose-950/95 text-rose-200 border-rose-800'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-[#C5A059] flex-shrink-0" />
+            ) : (
+              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+            )}
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)} 
+              className="ml-2 p-1 text-zinc-400 hover:text-white dark:hover:text-zinc-900 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -271,7 +319,7 @@ export default function AdminCustomersPage() {
                         {user.isActive !== false ? <UserX size={15} /> : <UserCheck size={15} />}
                       </button>
                       <button 
-                        onClick={() => handleDelete(user._id, user.name)} 
+                        onClick={() => setUserToDelete({ id: user._id, name: user.name })} 
                         disabled={actionLoading === user._id}
                         className="p-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white active:scale-95 rounded-lg transition-colors"
                       >
@@ -410,7 +458,7 @@ export default function AdminCustomersPage() {
                               {user.isActive !== false ? <UserX size={15} /> : <UserCheck size={15} />}
                             </button>
                             <button 
-                              onClick={() => handleDelete(user._id, user.name)} 
+                              onClick={() => setUserToDelete({ id: user._id, name: user.name })} 
                               disabled={actionLoading === user._id}
                               className="p-2 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg active:scale-95 transition-all"
                               title="Delete permanently"
@@ -428,6 +476,63 @@ export default function AdminCustomersPage() {
           </table>
         </div>
       </div>
+
+      {/* Client Deletion Confirmation Dialog (System Modal Popup) */}
+      <AnimatePresence>
+        {userToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeletingUser && setUserToDelete(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#121212] rounded-2xl p-7 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 mx-auto text-rose-600">
+                <Trash2 size={22} />
+              </div>
+              <div className="text-center mb-6">
+                <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Delete Client Account?</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+                  Are you sure you want to permanently erase the client account for <span className="font-semibold text-zinc-900 dark:text-white">"{userToDelete.name}"</span>?
+                </p>
+                <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-2.5">
+                  ⚠️ This will permanently remove their access and client credentials.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => handleDeleteConfirmed(userToDelete.id, userToDelete.name)}
+                  disabled={isDeletingUser}
+                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                >
+                  {isDeletingUser ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Deleting Client...
+                    </>
+                  ) : (
+                    'Yes, Delete Client'
+                  )}
+                </button>
+                <button
+                  onClick={() => setUserToDelete(null)}
+                  disabled={isDeletingUser}
+                  className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-[0.98] text-zinc-900 dark:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                >
+                  No, Keep Client
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

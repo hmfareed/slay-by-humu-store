@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface Product {
   _id: string;
@@ -49,6 +49,18 @@ export default function AdminProductsPage() {
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+
+  // System popup state (no browser confirm/alert)
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => {
+      setNotification((prev) => (prev?.message === message ? null : prev));
+    }, 4000);
+  };
 
   const resetForm = () => {
     setFormData({
@@ -139,6 +151,7 @@ export default function AdminProductsPage() {
         resetForm();
         setIsModalOpen(false);
         fetchProducts();
+        showToast('success', editingProductId ? 'Product updated successfully.' : 'Product published to boutique.');
       } else {
         setMessage(result.message || `Failed to ${editingProductId ? 'update' : 'add'} product`);
       }
@@ -167,9 +180,8 @@ export default function AdminProductsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
-
+  const handleDeleteConfirmed = async (id: string, name: string) => {
+    setIsDeletingProduct(true);
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/products/${id}`, {
@@ -177,13 +189,17 @@ export default function AdminProductsPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        fetchProducts();
+        setProducts(prev => prev.filter(p => p._id !== id));
+        setProductToDelete(null);
+        showToast('success', `${name} deleted successfully.`);
       } else {
         const data = await res.json();
-        alert(data.message || 'Failed to delete product');
+        showToast('error', data.message || 'Failed to delete product');
       }
     } catch (error) {
-      alert('Failed to delete product');
+      showToast('error', 'Failed to delete product');
+    } finally {
+      setIsDeletingProduct(false);
     }
   };
 
@@ -196,7 +212,36 @@ export default function AdminProductsPage() {
   });
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 relative">
+      {/* In-App Floating Toast Notification (System Popup) */}
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold uppercase tracking-wider backdrop-blur-md ${
+              notification.type === 'success'
+                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-[#C5A059]/40'
+                : 'bg-rose-950/95 text-rose-200 border-rose-800'
+            }`}
+          >
+            {notification.type === 'success' ? (
+              <CheckCircle2 size={16} className="text-[#C5A059] flex-shrink-0" />
+            ) : (
+              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+            )}
+            <span>{notification.message}</span>
+            <button 
+              onClick={() => setNotification(null)} 
+              className="ml-2 p-1 text-zinc-400 hover:text-white dark:hover:text-zinc-900 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
@@ -297,7 +342,7 @@ export default function AdminProductsPage() {
                   <Edit2 size={13} /> Edit
                 </button>
                 <button 
-                  onClick={() => handleDelete(product._id, product.name)}
+                  onClick={() => setProductToDelete(product)}
                   className="flex-1 flex items-center justify-center gap-2 py-2 bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white active:scale-95 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all"
                 >
                   <Trash2 size={13} /> Delete
@@ -400,7 +445,7 @@ export default function AdminProductsPage() {
                           <Edit2 size={15} />
                         </button>
                         <button 
-                          onClick={() => handleDelete(product._id, product.name)}
+                          onClick={() => setProductToDelete(product)}
                           className="p-2 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg active:scale-95 transition-all"
                           title="Delete Product"
                         >
@@ -596,6 +641,63 @@ export default function AdminProductsPage() {
                   {uploading ? (
                     <><span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin mr-2"></span> {editingProductId ? 'Saving...' : 'Publishing...'}</>
                   ) : editingProductId ? 'Save Changes' : 'Publish Product'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Product Deletion Confirmation Dialog (System Modal Popup) */}
+      <AnimatePresence>
+        {productToDelete && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => !isDeletingProduct && setProductToDelete(null)}
+              className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-[#121212] rounded-2xl p-7 shadow-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden"
+            >
+              <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 mx-auto text-rose-600">
+                <Trash2 size={22} />
+              </div>
+              <div className="text-center mb-6">
+                <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Delete Product?</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
+                  Are you sure you want to permanently delete <span className="font-semibold text-zinc-900 dark:text-white">"{productToDelete.name}"</span> priced at <span className="font-mono font-semibold tabular-nums text-zinc-900 dark:text-white">₵{Number(productToDelete.price).toLocaleString()}</span>?
+                </p>
+                <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-2.5">
+                  ⚠️ This piece will be immediately removed from the customer storefront.
+                </p>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                <button
+                  onClick={() => handleDeleteConfirmed(productToDelete._id, productToDelete.name)}
+                  disabled={isDeletingProduct}
+                  className="w-full py-3 bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-60"
+                >
+                  {isDeletingProduct ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                      Deleting Product...
+                    </>
+                  ) : (
+                    'Yes, Delete Product'
+                  )}
+                </button>
+                <button
+                  onClick={() => setProductToDelete(null)}
+                  disabled={isDeletingProduct}
+                  className="w-full py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 active:scale-[0.98] text-zinc-900 dark:text-white rounded-xl font-semibold text-xs uppercase tracking-wider transition-all disabled:opacity-50"
+                >
+                  No, Keep Product
                 </button>
               </div>
             </motion.div>
