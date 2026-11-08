@@ -6,41 +6,65 @@ import dynamic from 'next/dynamic';
 // Lazy load charting libraries to prevent layout blocking and improve speed
 const RevenueChart = dynamic(() => import('@/components/admin/RevenueChart'), { ssr: false, loading: () => <div className="w-full h-full animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl"></div> });
 const OrdersChart = dynamic(() => import('@/components/admin/OrdersChart'), { ssr: false, loading: () => <div className="w-full h-full animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-xl"></div> });
-import { Package, Users, ShoppingCart, DollarSign, ArrowUpRight, ArrowDownRight, Calendar } from 'lucide-react';
+import { Package, Users, ShoppingCart, DollarSign, ArrowUpRight, ArrowDownRight, Calendar, AlertCircle, RefreshCw } from 'lucide-react';
 import { API_URL } from '@/src/lib/api';
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState('6m');
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setRefreshing(true);
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/admin/stats?range=${timeRange}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        if (data.success) {
-          setStats(data.data);
-        }
-      } catch (error) {
-        console.error('Error fetching admin stats:', error);
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+  const fetchStats = async () => {
+    try {
+      setRefreshing(true);
+      setErrorMessage(null);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
       }
-    };
-    
+
+      const res = await fetch(`${API_URL}/admin/stats?range=${timeRange}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        setErrorMessage('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = '/login?expired=true';
+        }, 1200);
+        return;
+      }
+
+      if (res.status === 403) {
+        setErrorMessage('Access denied: You are not authorized as an administrator.');
+        return;
+      }
+
+      const data = await res.json();
+      if (data.success) {
+        setStats(data.data);
+      } else {
+        setErrorMessage(data.message || 'Failed to fetch dashboard stats');
+      }
+    } catch (error) {
+      console.error('Error fetching admin stats:', error);
+      setErrorMessage('Network error while connecting to server. Please check backend connection.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
   }, [timeRange]);
 
   const handleRefresh = () => {
-    setLoading(true);
-    setTimeRange(prev => prev); // re-trigger fetch or we can extract fetchStats out
+    fetchStats();
   };
 
   if (loading && !refreshing) {
@@ -68,12 +92,28 @@ export default function AdminDashboard() {
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">Track your store's performance and recent activities.</p>
         </div>
         <button 
-          onClick={() => { setLoading(true); setTimeRange(timeRange); /* re-render triggers effect if we do it right, but better to just reload page or extract fetchStats */ window.location.reload(); }}
+          onClick={handleRefresh}
           className="px-4 py-2 bg-white dark:bg-[#121212] border border-zinc-200 dark:border-zinc-800 rounded-xl text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
         >
           {refreshing ? 'Refreshing...' : 'Refresh Data'}
         </button>
       </div>
+
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-700 dark:text-rose-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="flex-shrink-0" />
+            <p className="text-sm font-medium">{errorMessage}</p>
+          </div>
+          <button
+            onClick={fetchStats}
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -141,13 +181,13 @@ export default function AdminDashboard() {
             <div key={order._id} className="p-4 flex justify-between items-center">
               <div>
                 <p className="font-bold text-zinc-900 dark:text-white text-sm">#{order._id.substring(0, 8)}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">{new Date(order.createdAt).toLocaleDateString()}</p>
+                <p className="text-xs text-zinc-500 mt-0.5">{new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
               <div className="text-right">
                 <p className="font-bold text-zinc-900 dark:text-white text-sm">₵{order.totalAmount}</p>
                 <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                  order.status === 'Completed' || order.status === 'Delivered' ? 'text-emerald-500 bg-emerald-500/10' : 
-                  order.status === 'Pending' ? 'text-amber-500 bg-amber-500/10' : 
+                  order.status === 'Completed' || order.status === 'delivered' ? 'text-emerald-500 bg-emerald-500/10' : 
+                  order.status === 'Pending' || order.status === 'pending' ? 'text-amber-500 bg-amber-500/10' : 
                   'text-blue-500 bg-blue-500/10'
                 }`}>
                   {order.status}
@@ -174,11 +214,11 @@ export default function AdminDashboard() {
               {stats?.recentActivity?.length > 0 ? stats.recentActivity.map((order: any) => (
                 <tr key={order._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors">
                   <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">#{order._id.substring(0, 8)}</td>
-                  <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{new Date(order.createdAt).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                      order.status === 'Completed' || order.status === 'Delivered' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 
-                      order.status === 'Pending' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' : 
+                      order.status === 'Completed' || order.status === 'delivered' ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20' : 
+                      order.status === 'Pending' || order.status === 'pending' ? 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20' : 
                       'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
                     }`}>
                       {order.status}

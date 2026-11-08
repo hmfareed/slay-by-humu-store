@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, Package, MapPin, CreditCard, User, Calendar, ChevronDown, AlertTriangle } from 'lucide-react';
+import { Search, X, Package, MapPin, CreditCard, User, Calendar, ChevronDown, AlertTriangle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface Order {
   _id: string;
@@ -22,6 +22,7 @@ const STATUS_TABS = ['all', 'pending', 'processing', 'shipped', 'picked_up', 'de
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [fromDate, setFromDate] = useState('');
@@ -32,8 +33,14 @@ export default function AdminOrdersPage() {
 
   const fetchOrders = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
       const params = new URLSearchParams();
       if (statusFilter !== 'all') params.append('status', statusFilter);
       if (fromDate) params.append('fromDate', fromDate);
@@ -42,10 +49,32 @@ export default function AdminOrdersPage() {
       const res = await fetch(`${API_URL}/orders/all?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        setErrorMessage('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = '/login?expired=true';
+        }, 1200);
+        return;
+      }
+
+      if (res.status === 403) {
+        setErrorMessage('Access denied: You are not authorized as an administrator.');
+        setOrders([]);
+        return;
+      }
+
       const data = await res.json();
-      setOrders(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        setErrorMessage(data.message || 'Failed to load orders');
+        setOrders([]);
+      }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      setErrorMessage('Network error while connecting to server. Please check backend connection.');
     } finally {
       setLoading(false);
     }
@@ -137,12 +166,13 @@ export default function AdminOrdersPage() {
   };
 
   const filteredOrders = orders.filter(o =>
-    o._id.toLowerCase().includes(search.toLowerCase()) ||
-    (o.user && o.user.name?.toLowerCase().includes(search.toLowerCase()))
+    (o._id || '').toLowerCase().includes(search.toLowerCase()) ||
+    (o.user && o.user.name?.toLowerCase().includes(search.toLowerCase())) ||
+    (o.shippingAddress?.address && o.shippingAddress.address.toLowerCase().includes(search.toLowerCase()))
   );
 
   const statusBadge = (status: string) => {
-    const s = status.toLowerCase();
+    const s = (status || '').toLowerCase();
     if (s === 'delivered') return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
     if (s === 'picked_up') return 'bg-emerald-600 text-white border-emerald-700 dark:bg-emerald-600 dark:text-white dark:border-emerald-500';
     if (s === 'shipped') return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20';
@@ -152,8 +182,9 @@ export default function AdminOrdersPage() {
   };
 
   const paymentBadge = (ps: string) => {
-    if (ps === 'paid') return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
-    if (ps === 'refunded') return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
+    const s = (ps || '').toLowerCase();
+    if (s === 'paid') return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20';
+    if (s === 'refunded') return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20';
     return 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700';
   };
 
@@ -173,6 +204,22 @@ export default function AdminOrdersPage() {
           Delete All Orders
         </button>
       </div>
+
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-700 dark:text-rose-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="flex-shrink-0" />
+            <p className="text-sm font-medium">{errorMessage}</p>
+          </div>
+          <button
+            onClick={fetchOrders}
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       {/* Status Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 text-zinc-600 dark:text-zinc-400">
@@ -357,7 +404,7 @@ export default function AdminOrdersPage() {
                 <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-4">
                   <h3 className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-3 flex items-center gap-2"><User size={14} /> Customer</h3>
                   <p className="font-medium text-zinc-900 dark:text-white">{selectedOrder.user?.name || 'Guest'}</p>
-                  <p className="text-sm text-zinc-500">{selectedOrder.user?.email}</p>
+                  <p className="text-sm text-zinc-500">{selectedOrder.user?.email || 'N/A'}</p>
                   {selectedOrder.user?.phone && <p className="text-sm text-zinc-500">{selectedOrder.user.phone}</p>}
                 </div>
 

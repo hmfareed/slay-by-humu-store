@@ -1,7 +1,7 @@
 // app/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,6 +28,12 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.search.includes('expired=true')) {
+      showNotification('Your session has expired. Please sign in again.', 'info');
+    }
+  }, [showNotification]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -79,8 +85,12 @@ export default function LoginPage() {
         showNotification(isLogin ? 'Login successful! Redirecting...' : 'Account created successfully!', 'success');
         
         setTimeout(() => {
-          router.push('/');
-        }, 1500);
+          if (data.role === 'admin') {
+            router.push('/admin');
+          } else {
+            router.push('/');
+          }
+        }, 1200);
       } else {
         showNotification(data.message || 'Something went wrong', 'error');
       }

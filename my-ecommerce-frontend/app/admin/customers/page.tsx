@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Calendar, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Trash2, Eye, UserX, UserCheck, MoreVertical } from 'lucide-react';
+import { Search, Calendar, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Trash2, Eye, UserX, UserCheck, MoreVertical, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -22,20 +22,49 @@ interface User {
 export default function AdminCustomersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
+    setErrorMessage(null);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
       const res = await fetch(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        setErrorMessage('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = '/login?expired=true';
+        }, 1200);
+        return;
+      }
+
+      if (res.status === 403) {
+        setErrorMessage('Access denied: You are not authorized as an administrator.');
+        setUsers([]);
+        return;
+      }
+
       const data = await res.json();
-      setUsers(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setUsers(data);
+      } else {
+        setErrorMessage(data.message || 'Failed to load customers');
+        setUsers([]);
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setErrorMessage('Network error while connecting to server. Please check backend connection.');
     } finally {
       setLoading(false);
     }
@@ -87,8 +116,8 @@ export default function AdminCustomersPage() {
   };
 
   const filteredUsers = users.filter(u =>
-    u.name.toLowerCase().includes(search.toLowerCase()) ||
-    u.email.toLowerCase().includes(search.toLowerCase()) ||
+    (u.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (u.email || '').toLowerCase().includes(search.toLowerCase()) ||
     (u.phone && u.phone.includes(search))
   );
 
@@ -105,6 +134,22 @@ export default function AdminCustomersPage() {
           <p className="text-zinc-500 dark:text-zinc-400 mt-1">Manage and understand your registered users.</p>
         </div>
       </div>
+
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-700 dark:text-rose-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="flex-shrink-0" />
+            <p className="text-sm font-medium">{errorMessage}</p>
+          </div>
+          <button
+            onClick={fetchUsers}
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-3 md:gap-6">
@@ -145,7 +190,7 @@ export default function AdminCustomersPage() {
             <div key={user._id} className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-5 shadow-sm relative overflow-hidden">
               <div className="flex items-center gap-4 mb-4">
                 <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white overflow-hidden ${user.isActive === false ? 'bg-zinc-400' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
-                  {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0).toUpperCase()}
+                  {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.name || '?').charAt(0).toUpperCase()}
                 </div>
                 <div>
                   <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
@@ -208,13 +253,15 @@ export default function AdminCustomersPage() {
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
               {loading ? (
                 <tr><td colSpan={7} className="px-6 py-12 text-center">Loading...</td></tr>
+              ) : filteredUsers.length === 0 ? (
+                <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-500">No customers found.</td></tr>
               ) : (
                 filteredUsers.map((user) => (
                   <tr key={user._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white overflow-hidden ${user.isActive === false ? 'bg-zinc-400' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
-                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0).toUpperCase()}
+                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.name || '?').charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <Link href={`/admin/customers/${user._id}`} className="font-semibold text-zinc-900 dark:text-white hover:text-violet-600 transition-colors">

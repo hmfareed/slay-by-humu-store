@@ -8,6 +8,7 @@ import { useNotificationStore } from '@/src/store/notificationStore';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
 import { socket } from '@/src/lib/socket';
+import { decodeToken, isTokenExpired } from '@/src/lib/jwt';
 
 const API = API_URL;
 
@@ -35,17 +36,32 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') return localStorage.getItem('token');
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('token');
+      if (stored && !isTokenExpired(stored)) {
+        return stored;
+      } else if (stored) {
+        localStorage.removeItem('token');
+      }
+    }
     return null;
   });
 
   const [user, setUser] = useState<UserInfo | null>(() => {
     if (typeof window !== 'undefined') {
       const storedToken = localStorage.getItem('token');
-      if (storedToken) {
+      if (storedToken && !isTokenExpired(storedToken)) {
         try {
-          const payload = JSON.parse(atob(storedToken.split('.')[1]));
-          return { _id: payload.id, name: payload.name || '', email: payload.email || '', role: payload.role || 'user', avatar: payload.avatar };
+          const payload = decodeToken(storedToken);
+          if (payload) {
+            return {
+              _id: payload.id || payload._id || '',
+              name: payload.name || '',
+              email: payload.email || '',
+              role: payload.role || 'user',
+              avatar: payload.avatar,
+            };
+          }
         } catch {
           return null;
         }
@@ -59,7 +75,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { showNotification } = useNotification();
 
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+    setOrderCount(0);
+    
+    // Clear global stores to prevent state leaking between users on same device
+    useCartStore.getState().clearCart();
+    useWishlistStore.getState().clearWishlist();
+
+    router.push('/login');
+  }, [router]);
+
   const fetchUserData = useCallback(async (activeToken: string) => {
+    if (isTokenExpired(activeToken)) {
+      logout();
+      return;
+    }
+
     try {
       const headers = { Authorization: `Bearer ${activeToken}` };
       
@@ -70,9 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetch(`${API}/orders`, { headers })
       ]);
 
+      if (wlRes.status === 401 || cartRes.status === 401 || notifRes.status === 401 || ordersRes.status === 401) {
+        console.warn('Session expired. Logging out.');
+        showNotification('Your session has expired. Please log in again.', 'error');
+        logout();
+        return;
+      }
+
       if (wlRes.ok) {
         const wlData = await wlRes.json();
-        const formattedWishlist = wlData.items.map((i: any) => i.product);
+        const formattedWishlist = wlData.items?.map((i: any) => i.product) || [];
         useWishlistStore.getState().setItems(formattedWishlist);
       }
       
@@ -83,19 +124,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (notifRes.ok) {
         const notifData = await notifRes.json();
-        const unread = notifData.filter((n: { isRead: boolean }) => !n.isRead).length;
+        const unread = Array.isArray(notifData) ? notifData.filter((n: { isRead: boolean }) => !n.isRead).length : 0;
         useNotificationStore.getState().setUnreadCount(unread);
       }
 
       if (ordersRes.ok) {
         const ordersData = await ordersRes.json();
-        const activeOrders = ordersData.filter((o: any) => ['pending', 'processing', 'shipped'].includes(o.status));
+        const activeOrders = Array.isArray(ordersData) ? ordersData.filter((o: any) => ['pending', 'processing', 'shipped'].includes(o.status)) : [];
         setOrderCount(activeOrders.length);
       }
     } catch (err) {
       console.error('Failed to fetch secured data', err);
     }
-  }, []);
+  }, [logout, showNotification]);
 
   // Init data after mount
   useEffect(() => {
@@ -148,20 +189,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUserData(newToken);
   }, [fetchUserData]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-    setOrderCount(0);
-    
-    // Clear global stores to prevent state leaking between users on same device
-    useCartStore.getState().clearCart();
-    useWishlistStore.getState().clearWishlist();
-
-    router.push('/');
-  }, [router]);
-
-
   const refreshUser = useCallback(async () => {
     if (!token) return;
     try {
@@ -172,21 +199,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await res.json();
         setUser({ _id: data._id, name: data.name, email: data.email, role: data.role, avatar: data.avatar });
         fetchUserData(token);
+      } else if (res.status === 401) {
+        logout();
       }
     } catch (err) {
       console.error('Failed to refresh user:', err);
     }
-  }, [token, fetchUserData]);
+  }, [token, fetchUserData, logout]);
 
-  // Helper: fetch with auth header
+  // Helper: fetch with auth header and auto logout on 401
   const authFetch = useCallback(async (url: string, options: RequestInit = {}) => {
     const headers: Record<string, string> = { ...(options.headers as Record<string, string>) };
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (!headers['Content-Type'] && !(options.body instanceof FormData)) {
       headers['Content-Type'] = 'application/json';
     }
-    return fetch(url, { ...options, headers });
-  }, [token]);
+    const res = await fetch(url, { ...options, headers });
+    if (res.status === 401) {
+      console.warn('Authentication token expired or rejected. Logging out.');
+      showNotification('Your session has expired. Please log in again.', 'error');
+      logout();
+    }
+    return res;
+  }, [token, logout, showNotification]);
 
   return (
     <AuthContext.Provider value={{ user, token, isLoggedIn: !!token, isLoading, login, logout, refreshUser, authFetch, orderCount }}>

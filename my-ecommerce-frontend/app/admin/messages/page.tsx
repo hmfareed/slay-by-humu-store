@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
-import { Send, Users, User as UserIcon, Loader2 } from 'lucide-react';
+import { Send, Users, User as UserIcon, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface User {
@@ -15,33 +15,60 @@ interface User {
 export default function AdminMessagesPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [targetUserId, setTargetUserId] = useState('all');
   const [isSending, setIsSending] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     try {
+      setLoadingUsers(true);
+      setErrorMessage(null);
       const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
       const res = await fetch(`${API_URL}/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        setErrorMessage('Your session has expired. Redirecting to login...');
+        setTimeout(() => {
+          window.location.href = '/login?expired=true';
+        }, 1200);
+        return;
+      }
+
+      if (res.status === 403) {
+        setErrorMessage('Access denied: You are not authorized as an administrator.');
+        setUsers([]);
+        return;
+      }
+
       const data = await res.json();
       if (Array.isArray(data)) {
         // Filter out admins so we only send to customers, though the backend also handles this
         setUsers(data.filter(u => u.role === 'user'));
+      } else {
+        setErrorMessage(data.message || 'Failed to load recipients');
       }
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setErrorMessage('Network error while connecting to server. Please check backend connection.');
     } finally {
       setLoadingUsers(false);
     }
   };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +88,13 @@ export default function AdminMessagesPage() {
         },
         body: JSON.stringify({ title, message, targetUserId })
       });
+
+      if (res.status === 401) {
+        localStorage.removeItem('token');
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/login?expired=true';
+        return;
+      }
 
       const data = await res.json();
       if (res.ok) {
@@ -86,6 +120,22 @@ export default function AdminMessagesPage() {
         <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Broadcast Messages</h1>
         <p className="text-zinc-500 dark:text-zinc-400 mt-1">Send in-app notifications directly to your customers.</p>
       </div>
+
+      {/* Error Alert Banner */}
+      {errorMessage && (
+        <div className="bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-rose-700 dark:text-rose-400">
+          <div className="flex items-center gap-3">
+            <AlertCircle size={20} className="flex-shrink-0" />
+            <p className="text-sm font-medium">{errorMessage}</p>
+          </div>
+          <button
+            onClick={fetchUsers}
+            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
+          >
+            <RefreshCw size={14} /> Retry
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         

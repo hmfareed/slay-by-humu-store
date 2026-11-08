@@ -17,6 +17,7 @@ import {
   Search,
   MessageSquare
 } from 'lucide-react';
+import { decodeToken, isTokenExpired } from '@/src/lib/jwt';
 
 const sidebarLinks = [
   { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
@@ -58,23 +59,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.replace('/login');
       return;
     }
+
+    if (isTokenExpired(token)) {
+      console.warn('Admin token has expired. Redirecting to login.');
+      localStorage.removeItem('token');
+      router.replace('/login?expired=true');
+      return;
+    }
     
     try {
-      // Basic jwt decode without library
-      const base64Url = token.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      const user = JSON.parse(jsonPayload);
-      if (user.role !== 'admin') {
+      const user = decodeToken(token);
+      if (!user || user.role !== 'admin') {
         router.replace('/'); // Not authorized
       } else {
         setIsAdmin(true);
       }
     } catch (e) {
       console.error(e);
+      localStorage.removeItem('token');
       router.replace('/login');
     }
   }, [router]);
