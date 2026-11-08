@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Calendar, ShoppingBag, DollarSign, ToggleLeft, ToggleRight, Trash2, Eye, UserX, UserCheck, MoreVertical, AlertCircle, RefreshCw } from 'lucide-react';
+import { Search, Eye, UserX, UserCheck, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface User {
   _id: string;
@@ -126,13 +125,24 @@ export default function AdminCustomersPage() {
   const disabledCustomers = users.filter(u => u.role === 'user' && !u.isActive).length;
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Customers</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Manage and understand your registered users.</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">
+            Client Directory
+          </h1>
+          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+            Review registered clientele, order histories, and membership permissions.
+          </p>
         </div>
+        <button
+          onClick={fetchUsers}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-[#141414] border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 hover:border-[#C5A059] hover:text-[#C5A059] active:scale-[0.98] transition-all duration-150 shadow-sm self-start sm:self-auto"
+        >
+          <RefreshCw size={14} className={loading ? 'animate-spin text-[#C5A059]' : ''} />
+          Refresh Clients
+        </button>
       </div>
 
       {/* Error Alert Banner */}
@@ -144,7 +154,7 @@ export default function AdminCustomersPage() {
           </div>
           <button
             onClick={fetchUsers}
-            className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition-colors"
+            className="flex items-center gap-2 px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold active:scale-95 transition-all"
           >
             <RefreshCw size={14} /> Retry
           </button>
@@ -154,78 +164,119 @@ export default function AdminCustomersPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-3 gap-3 md:gap-6">
         {[
-          { label: 'Total', value: totalCustomers, color: 'from-violet-500 to-fuchsia-500' },
-          { label: 'Active', value: activeCustomers, color: 'from-emerald-500 to-teal-500' },
-          { label: 'Disabled', value: disabledCustomers, color: 'from-rose-500 to-red-500' },
+          { label: 'Total Clients', value: totalCustomers, sub: 'Registered users' },
+          { label: 'Active Accounts', value: activeCustomers, sub: 'In good standing' },
+          { label: 'Restricted', value: disabledCustomers, sub: 'Access suspended' },
         ].map((stat, i) => (
-          <div key={i} className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-4 md:p-6 shadow-sm">
-            <p className="text-[10px] md:text-sm uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400">{stat.label}</p>
-            <p className="text-xl md:text-3xl font-bold text-zinc-900 dark:text-white mt-1">{stat.value}</p>
+          <div key={i} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 md:p-6 shadow-sm hover:border-[#C5A059]/40 transition-colors">
+            <p className="text-[11px] uppercase tracking-wider font-semibold text-zinc-500 dark:text-zinc-400 font-sans">{stat.label}</p>
+            <p className="font-serif text-2xl md:text-3xl font-bold text-zinc-900 dark:text-white tabular-nums tracking-tight mt-1">{stat.value}</p>
+            <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">{stat.sub}</p>
           </div>
         ))}
       </div>
 
       {/* Toolbar */}
-      <div className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-4 flex items-center shadow-sm">
+      <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 flex items-center shadow-sm">
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
           <input
             type="text"
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search by client name, email, or telephone..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 transition-all text-zinc-800 dark:text-zinc-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 focus:border-[#C5A059]/60 transition-all text-zinc-800 dark:text-zinc-200 text-sm font-sans"
           />
         </div>
       </div>
 
-      {/* Mobile Card Layout (Visible only on small screens) */}
+      {/* Mobile Card Layout */}
       <div className="grid grid-cols-1 gap-4 md:hidden">
         {loading ? (
-          <div className="py-20 text-center text-zinc-500">Loading customers...</div>
+          <>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm animate-pulse space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-full bg-zinc-200 dark:bg-zinc-800"></div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                    <div className="h-3 w-40 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+                  </div>
+                </div>
+                <div className="h-12 bg-zinc-100 dark:bg-zinc-800/40 rounded-xl"></div>
+              </div>
+            ))}
+          </>
         ) : filteredUsers.length === 0 ? (
-          <div className="py-20 text-center text-zinc-500">No customers found.</div>
+          <div className="py-16 text-center text-zinc-500 text-sm">No customers match your query.</div>
         ) : (
           filteredUsers.map((user) => (
-            <div key={user._id} className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-5 shadow-sm relative overflow-hidden">
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-white overflow-hidden ${user.isActive === false ? 'bg-zinc-400' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
-                  {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.name || '?').charAt(0).toUpperCase()}
+            <div key={user._id} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-5 shadow-sm relative overflow-hidden">
+              <div className="flex items-center gap-3.5 mb-4">
+                <div className="w-11 h-11 rounded-full flex items-center justify-center font-serif font-bold text-[#C5A059] bg-zinc-900 dark:bg-zinc-800 border border-[#C5A059]/30 overflow-hidden flex-shrink-0">
+                  {user.avatar ? (
+                    <img src={user.avatar} className="w-full h-full object-cover" />
+                  ) : (
+                    (user.name || '?').charAt(0).toUpperCase()
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-zinc-900 dark:text-white flex items-center gap-2 text-sm truncate">
                     {user.name}
-                    {user.role === 'admin' && <span className="text-[9px] bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full font-bold uppercase">Admin</span>}
+                    {user.role === 'admin' && (
+                      <span className="text-[9px] bg-[#C5A059]/10 text-[#C5A059] border border-[#C5A059]/30 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                        Admin
+                      </span>
+                    )}
                   </h3>
-                  <p className="text-xs text-zinc-500">{user.email}</p>
+                  <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-zinc-100 dark:border-zinc-800/50 mb-4">
+              <div className="grid grid-cols-2 gap-4 py-3 border-y border-zinc-100 dark:border-zinc-800/60 mb-3.5">
                 <div>
                   <p className="text-[10px] text-zinc-400 uppercase font-semibold">Orders</p>
-                  <p className="text-sm font-bold">{user.totalOrders || 0}</p>
+                  <p className="text-sm font-mono font-semibold tabular-nums text-zinc-900 dark:text-white mt-0.5">
+                    {user.totalOrders || 0}
+                  </p>
                 </div>
                 <div>
                   <p className="text-[10px] text-zinc-400 uppercase font-semibold">Spent</p>
-                  <p className="text-sm font-bold">₵{(user.totalSpent || 0).toLocaleString()}</p>
+                  <p className="text-sm font-mono font-semibold tabular-nums text-zinc-900 dark:text-white mt-0.5">
+                    ₵{Number(user.totalSpent || 0).toLocaleString()}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
-                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-tight ${
-                  user.isActive !== false ? 'bg-emerald-500/10 text-emerald-500' : 'bg-zinc-500/10 text-zinc-500'
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${
+                  user.isActive !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : 'bg-zinc-100 text-zinc-500 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-500'
                 }`}>
                   {user.isActive !== false ? 'Active' : 'Disabled'}
                 </span>
-                <div className="flex gap-2">
-                  <Link href={`/admin/customers/${user._id}`} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg"><Eye size={16} /></Link>
+                <div className="flex gap-1.5">
+                  <Link 
+                    href={`/admin/customers/${user._id}`} 
+                    className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:text-[#C5A059] active:scale-95 rounded-lg transition-colors"
+                  >
+                    <Eye size={15} />
+                  </Link>
                   {user.role !== 'admin' && (
                     <>
-                      <button onClick={() => handleToggleStatus(user._id)} className="p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-                        {user.isActive !== false ? <UserX size={16} /> : <UserCheck size={16} />}
+                      <button 
+                        onClick={() => handleToggleStatus(user._id)} 
+                        disabled={actionLoading === user._id}
+                        className="p-2 bg-zinc-100 dark:bg-zinc-800 hover:text-amber-600 active:scale-95 rounded-lg transition-colors"
+                      >
+                        {user.isActive !== false ? <UserX size={15} /> : <UserCheck size={15} />}
                       </button>
-                      <button onClick={() => handleDelete(user._id, user.name)} className="p-2 bg-rose-500/10 text-rose-500 rounded-lg"><Trash2 size={16} /></button>
+                      <button 
+                        onClick={() => handleDelete(user._id, user.name)} 
+                        disabled={actionLoading === user._id}
+                        className="p-2 bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white active:scale-95 rounded-lg transition-colors"
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </>
                   )}
                 </div>
@@ -235,58 +286,137 @@ export default function AdminCustomersPage() {
         )}
       </div>
 
-      {/* PC Table Layout (Hidden on small screens) */}
-      <div className="hidden md:block bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-3xl overflow-hidden shadow-sm">
+      {/* PC Table Layout */}
+      <div className="hidden md:block bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-zinc-50 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400">
+            <thead className="bg-zinc-50/80 dark:bg-zinc-900/50 text-zinc-500 dark:text-zinc-400 text-xs uppercase tracking-wider font-semibold border-b border-zinc-100 dark:border-zinc-800/60">
               <tr>
-                <th className="px-6 py-4 font-medium">Customer</th>
-                <th className="px-6 py-4 font-medium">Phone</th>
-                <th className="px-6 py-4 font-medium">Orders</th>
-                <th className="px-6 py-4 font-medium">Total Spent</th>
-                <th className="px-6 py-4 font-medium">Joined</th>
-                <th className="px-6 py-4 font-medium">Status</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-4">Client</th>
+                <th className="px-6 py-4">Phone</th>
+                <th className="px-6 py-4">Orders</th>
+                <th className="px-6 py-4">Total Spent</th>
+                <th className="px-6 py-4">Joined</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
+            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
               {loading ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center">Loading...</td></tr>
+                // 5-row structured skeleton loader
+                <>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-800"></div>
+                          <div className="space-y-1.5">
+                            <div className="h-4 w-28 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                            <div className="h-3 w-36 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-24 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-8 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-16 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-20 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-16 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="h-7 w-20 bg-zinc-200 dark:bg-zinc-800 rounded-lg ml-auto"></div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
               ) : filteredUsers.length === 0 ? (
-                <tr><td colSpan={7} className="px-6 py-12 text-center text-zinc-500">No customers found.</td></tr>
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center text-zinc-500 text-sm">
+                    No customers found matching your search.
+                  </td>
+                </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-zinc-50 dark:hover:bg-zinc-900/50 transition-colors group">
+                  <tr key={user._id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white overflow-hidden ${user.isActive === false ? 'bg-zinc-400' : 'bg-gradient-to-tr from-violet-500 to-fuchsia-500'}`}>
-                          {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : (user.name || '?').charAt(0).toUpperCase()}
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center font-serif font-bold text-sm text-[#C5A059] bg-zinc-900 dark:bg-zinc-800 border border-[#C5A059]/30 overflow-hidden flex-shrink-0">
+                          {user.avatar ? (
+                            <img src={user.avatar} className="w-full h-full object-cover" />
+                          ) : (
+                            (user.name || '?').charAt(0).toUpperCase()
+                          )}
                         </div>
                         <div>
-                          <Link href={`/admin/customers/${user._id}`} className="font-semibold text-zinc-900 dark:text-white hover:text-violet-600 transition-colors">
+                          <Link 
+                            href={`/admin/customers/${user._id}`} 
+                            className="font-semibold text-zinc-900 dark:text-white hover:text-[#C5A059] transition-colors flex items-center gap-2"
+                          >
                             {user.name}
+                            {user.role === 'admin' && (
+                              <span className="text-[9px] bg-[#C5A059]/10 text-[#C5A059] border border-[#C5A059]/30 px-1.5 py-0.2 rounded-full font-bold uppercase tracking-wider">
+                                Admin
+                              </span>
+                            )}
                           </Link>
                           <p className="text-xs text-zinc-500">{user.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">{user.phone || '—'}</td>
-                    <td className="px-6 py-4">{user.totalOrders || 0}</td>
-                    <td className="px-6 py-4 font-medium text-zinc-900 dark:text-white">₵{(user.totalSpent || 0).toLocaleString()}</td>
-                    <td className="px-6 py-4">{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 font-mono text-xs tabular-nums text-zinc-600 dark:text-zinc-400">
+                      {user.phone || '—'}
+                    </td>
+                    <td className="px-6 py-4 font-mono text-sm tabular-nums text-zinc-900 dark:text-white">
+                      {user.totalOrders || 0}
+                    </td>
+                    <td className="px-6 py-4 font-mono font-medium text-sm tabular-nums text-zinc-900 dark:text-white">
+                      ₵{Number(user.totalSpent || 0).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+                      {new Date(user.createdAt).toLocaleDateString()}
+                    </td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-zinc-100 text-zinc-500 border-zinc-200'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium capitalize border ${
+                        user.isActive !== false ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' : 'bg-zinc-100 text-zinc-500 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-500'
+                      }`}>
                         {user.isActive !== false ? 'Active' : 'Disabled'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Link href={`/admin/customers/${user._id}`} className="p-2 text-zinc-500 hover:text-violet-600 rounded-lg transition-colors"><Eye size={16} /></Link>
+                      <div className="flex items-center justify-end gap-1 text-zinc-500">
+                        <Link 
+                          href={`/admin/customers/${user._id}`} 
+                          className="p-2 text-zinc-500 hover:text-[#C5A059] hover:bg-[#C5A059]/10 rounded-lg active:scale-95 transition-all"
+                          title="View Profile"
+                        >
+                          <Eye size={15} />
+                        </Link>
                         {user.role !== 'admin' && (
                           <>
-                            <button onClick={() => handleToggleStatus(user._id)} className="p-2 text-zinc-500 hover:text-amber-600 rounded-lg"><UserX size={16} /></button>
-                            <button onClick={() => handleDelete(user._id, user.name)} className="p-2 text-zinc-500 hover:text-rose-600 rounded-lg"><Trash2 size={16} /></button>
+                            <button 
+                              onClick={() => handleToggleStatus(user._id)} 
+                              disabled={actionLoading === user._id}
+                              className="p-2 text-zinc-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-500/10 rounded-lg active:scale-95 transition-all"
+                              title={user.isActive !== false ? 'Disable account' : 'Enable account'}
+                            >
+                              {user.isActive !== false ? <UserX size={15} /> : <UserCheck size={15} />}
+                            </button>
+                            <button 
+                              onClick={() => handleDelete(user._id, user.name)} 
+                              disabled={actionLoading === user._id}
+                              className="p-2 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg active:scale-95 transition-all"
+                              title="Delete permanently"
+                            >
+                              <Trash2 size={15} />
+                            </button>
                           </>
                         )}
                       </div>

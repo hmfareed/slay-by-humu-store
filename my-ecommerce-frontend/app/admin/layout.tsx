@@ -87,11 +87,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   if (!isAdmin) {
-    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">Verifying Admin Access...</div>;
+    return (
+      <div className="min-h-screen bg-[#0C0C0C] flex flex-col items-center justify-center text-zinc-300 gap-3">
+        <span className="w-6 h-6 border-2 border-[#C5A059]/30 border-t-[#C5A059] rounded-full animate-spin"></span>
+        <span className="text-xs uppercase tracking-[0.2em] font-medium text-zinc-400">Verifying Admin Access...</span>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-[#0A0A0A] flex overflow-hidden">
+    <div className="min-h-screen bg-[#FBFBFA] dark:bg-[#0C0C0C] flex overflow-hidden">
       
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
@@ -101,7 +106,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsSidebarOpen(false)}
-            className="fixed inset-0 bg-black/80 z-40 "
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
           />
         )}
       </AnimatePresence>
@@ -111,47 +116,58 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         initial={{ x: isMobile ? '-100%' : 0 }}
         animate={{ x: isSidebarOpen ? 0 : '-100%' }}
         transition={{ duration: 0.15, ease: 'easeInOut' }}
-        className={`fixed md:relative flex flex-col w-72 h-screen z-50 transition-all 
-          bg-white dark:bg-[#121212] border-r border-zinc-200 dark:border-zinc-800 shadow-xl md:shadow-none`}
+        className="fixed md:relative flex flex-col w-72 h-screen z-50 transition-all 
+          bg-white dark:bg-[#121212] border-r border-zinc-200/80 dark:border-zinc-800/80 shadow-xl md:shadow-none"
       >
-        <div className="p-6 flex items-center justify-between">
-          <Link href="/admin" className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-fuchsia-500 tracking-tight">
-            Slay<span className="text-black dark:text-white">Admin</span>
+        <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+          <Link href="/admin" className="group flex flex-col">
+            <span className="font-serif text-2xl font-semibold tracking-tight text-zinc-900 dark:text-white group-hover:text-[#C5A059] transition-colors">
+              Slay <span className="font-sans font-light text-zinc-400 dark:text-zinc-500">by</span> Humu
+            </span>
+            <span className="text-[10px] uppercase tracking-[0.25em] font-medium text-[#C5A059] -mt-0.5">
+              Atelier Admin
+            </span>
           </Link>
           {isMobile && (
-            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-zinc-500 hover:text-black dark:hover:text-white">
-              <X size={24} />
+            <button 
+              onClick={() => setIsSidebarOpen(false)} 
+              className="md:hidden text-zinc-500 hover:text-black dark:hover:text-white active:scale-95 transition-all p-1"
+            >
+              <X size={20} />
             </button>
           )}
         </div>
 
-        <nav className="flex-1 px-4 py-8 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {sidebarLinks.map((link) => {
-            const isActive = pathname === link.href || pathname.startsWith(link.href + '/');
+            const isActive = pathname === link.href || (link.href !== '/admin' && pathname.startsWith(link.href));
             const Icon = link.icon;
             
             return (
               <Link key={link.name} href={link.href} onClick={() => isMobile && setIsSidebarOpen(false)}>
-                <div className={`flex items-center px-4 py-3 rounded-2xl transition-all duration-200 group
+                <div className={`flex items-center px-4 py-3 rounded-xl transition-all duration-150 group relative
                   ${isActive 
-                    ? 'bg-gradient-to-tr from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-500/25' 
-                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'
+                    ? 'bg-zinc-900 text-white dark:bg-zinc-800/90 shadow-sm font-semibold' 
+                    : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-white'
                   }`}
                 >
-                  <Icon size={20} className={`mr-3 ${isActive ? 'text-white' : 'text-zinc-400 group-hover:text-black dark:group-hover:text-white'}`} />
-                  <span className="font-medium text-sm">{link.name}</span>
+                  {isActive && (
+                    <span className="absolute left-0 top-2 bottom-2 w-1 bg-[#C5A059] rounded-r-full" />
+                  )}
+                  <Icon size={18} className={`mr-3 transition-colors ${isActive ? 'text-[#C5A059]' : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}`} />
+                  <span className="text-sm">{link.name}</span>
                 </div>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="p-4 border-t border-zinc-100 dark:border-zinc-800/60">
           <button 
             onClick={handleLogout}
-            className="flex items-center w-full px-4 py-3 rounded-2xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
+            className="flex items-center w-full px-4 py-3 rounded-xl text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 active:scale-[0.98] transition-all duration-150"
           >
-            <LogOut size={20} className="mr-3" />
+            <LogOut size={18} className="mr-3" />
             <span className="font-medium text-sm">Logout / Exit</span>
           </button>
         </div>
@@ -161,34 +177,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
         {/* Top Navbar */}
-        <header className="h-20 bg-white dark:bg-black  border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between px-6 z-30 sticky top-0">
+        <header className="h-20 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800/80 flex items-center justify-between px-6 z-30 sticky top-0">
           <div className="flex items-center">
             <button 
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="mr-4 p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors"
+              className="mr-4 p-2 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 active:scale-95 transition-all"
             >
-              <Menu size={24} />
+              <Menu size={22} />
             </button>
             
             {/* Search Bar */}
-            <div className="hidden md:flex items-center bg-zinc-100 dark:bg-zinc-900 rounded-2xl px-4 py-2 border border-zinc-200 dark:border-zinc-800 focus-within:ring-2 ring-violet-500/50 transition-all">
-              <Search size={18} className="text-zinc-400" />
+            <div className="hidden md:flex items-center bg-zinc-100/80 dark:bg-zinc-900/80 rounded-xl px-4 py-2 border border-zinc-200 dark:border-zinc-800 focus-within:ring-2 focus-within:ring-[#C5A059]/40 focus-within:border-[#C5A059]/60 transition-all">
+              <Search size={16} className="text-zinc-400" />
               <input 
                 type="text" 
-                placeholder="Search..." 
-                className="bg-transparent border-none focus:outline-none text-sm ml-3 w-64 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400"
+                placeholder="Quick search across atelier..." 
+                className="bg-transparent border-none focus:outline-none text-sm ml-3 w-64 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 font-sans"
               />
             </div>
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="p-2 relative rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border border-white dark:border-black"></span>
+            <button className="p-2 relative rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 active:scale-95 transition-all">
+              <Bell size={18} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-[#C5A059] rounded-full border border-white dark:border-black"></span>
             </button>
-            <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-[2px]">
-              <div className="w-full h-full bg-white dark:bg-black rounded-full border-2 border-white dark:border-black overflow-hidden flex items-center justify-center">
-                <span className="text-xs font-bold">Admin</span>
+            <div className="h-10 w-10 rounded-full ring-2 ring-[#C5A059]/30 p-[2px] bg-zinc-100 dark:bg-zinc-900">
+              <div className="w-full h-full bg-zinc-900 dark:bg-zinc-800 rounded-full overflow-hidden flex items-center justify-center text-zinc-100 shadow-sm">
+                <span className="text-xs font-serif font-bold tracking-wider text-[#C5A059]">SH</span>
               </div>
             </div>
           </div>
@@ -198,9 +214,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="flex-1 overflow-y-auto p-6 md:p-10 scroll-smooth">
           <motion.div
             key={pathname}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
             className="max-w-7xl mx-auto"
           >
             {children}

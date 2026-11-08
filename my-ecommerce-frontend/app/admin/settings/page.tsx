@@ -2,16 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
-import { User, Store, Truck, CreditCard, Bell, Save, Check, Loader2, Plus, X, Shield } from 'lucide-react';
+import { Store, Truck, CreditCard, Bell, Save, Check, Loader2, Plus, X, Shield } from 'lucide-react';
 
 type SettingsTab = 'account' | 'store' | 'delivery' | 'payment' | 'notifications';
 
 const TABS: { id: SettingsTab; label: string; icon: any; emoji: string }[] = [
-  { id: 'account', label: 'Account', icon: Shield, emoji: '🔐' },
-  { id: 'store', label: 'Store', icon: Store, emoji: '🏪' },
-  { id: 'delivery', label: 'Delivery', icon: Truck, emoji: '🚚' },
-  { id: 'payment', label: 'Payment', icon: CreditCard, emoji: '💳' },
-  { id: 'notifications', label: 'Notifications', icon: Bell, emoji: '🔔' },
+  { id: 'account', label: 'Admin Security', icon: Shield, emoji: '🔐' },
+  { id: 'store', label: 'Storefront', icon: Store, emoji: '🏪' },
+  { id: 'delivery', label: 'Logistics & Regions', icon: Truck, emoji: '🚚' },
+  { id: 'payment', label: 'Payment Channels', icon: CreditCard, emoji: '💳' },
+  { id: 'notifications', label: 'Alert Preferences', icon: Bell, emoji: '🔔' },
 ];
 
 export default function AdminSettingsPage() {
@@ -108,7 +108,7 @@ export default function AdminSettingsPage() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
-      setPasswordMsg('Both fields are required');
+      setPasswordMsg('Both current and new password are required');
       return;
     }
     setSaving(true);
@@ -122,14 +122,14 @@ export default function AdminSettingsPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setPasswordMsg('✅ Password changed successfully');
+        setPasswordMsg('✅ Password updated successfully');
         setCurrentPassword('');
         setNewPassword('');
       } else {
-        setPasswordMsg(data.message || 'Failed to change password');
+        setPasswordMsg(data.message || 'Failed to update password');
       }
     } catch (error) {
-      setPasswordMsg('Error changing password');
+      setPasswordMsg('Error updating password');
     } finally {
       setSaving(false);
     }
@@ -160,8 +160,8 @@ export default function AdminSettingsPage() {
   };
 
   const addRegion = () => {
-    if (newRegion.trim() && !settings.deliveryRegions.includes(newRegion.trim())) {
-      setSettings({ ...settings, deliveryRegions: [...settings.deliveryRegions, newRegion.trim()] });
+    if (newRegion.trim() && !settings.deliveryRegions?.includes(newRegion.trim())) {
+      setSettings({ ...settings, deliveryRegions: [...(settings.deliveryRegions || []), newRegion.trim()] });
       setNewRegion('');
     }
   };
@@ -176,35 +176,42 @@ export default function AdminSettingsPage() {
     setSettings({ ...settings, paymentMethods: updated });
   };
 
-  const inputClass = "w-full px-4 py-3 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 ring-violet-500/50 text-zinc-900 dark:text-white text-sm transition-all";
-  const labelClass = "block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2";
+  const inputClass = "w-full px-4 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 focus:border-[#C5A059]/60 text-zinc-900 dark:text-white text-sm transition-all";
+  const labelClass = "block text-xs font-semibold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-2";
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-12">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">Settings</h1>
-        <p className="text-zinc-500 dark:text-zinc-400 mt-1">Control platform configurations.</p>
+        <h1 className="font-serif text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">
+          Platform Configuration
+        </h1>
+        <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
+          Storefront parameters, dispatch territories, payment switches, and credentials.
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Sidebar Tabs */}
         <div className="lg:w-64 flex-shrink-0">
-          <div className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-2xl p-2 shadow-sm lg:sticky lg:top-28">
+          <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-2 shadow-sm lg:sticky lg:top-28">
             <nav className="space-y-1">
               {TABS.map((tab) => {
-                const Icon = tab.icon;
+                const isSelected = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                      activeTab === tab.id
-                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-sm'
-                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900/50'
+                    className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold uppercase tracking-wider transition-all relative ${
+                      isSelected
+                        ? 'bg-zinc-900 text-white dark:bg-zinc-800 shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-white'
                     }`}
                   >
-                    <span className="text-base">{tab.emoji}</span>
-                    {tab.label}
+                    {isSelected && (
+                      <span className="absolute left-0 top-2 bottom-2 w-1 bg-[#C5A059] rounded-r-full" />
+                    )}
+                    <span className="text-sm">{tab.emoji}</span>
+                    <span>{tab.label}</span>
                   </button>
                 );
               })}
@@ -214,52 +221,60 @@ export default function AdminSettingsPage() {
 
         {/* Content Area */}
         <div className="flex-1 min-w-0">
-          <div className="bg-white dark:bg-[#121212] border border-zinc-100 dark:border-zinc-800/50 rounded-3xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl shadow-sm overflow-hidden">
 
             {/* Account Tab */}
             {activeTab === 'account' && (
-              <div className="p-8 space-y-8">
+              <div className="p-6 md:p-8 space-y-8">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-1">Account Settings</h2>
-                  <p className="text-sm text-zinc-500">Update your admin profile information.</p>
+                  <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-1">Administrative Profile</h2>
+                  <p className="text-xs text-zinc-500">Update verified contact coordinates for this administrator seat.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelClass}>Full Name</label>
+                    <label className={labelClass}>Full Legal Name</label>
                     <input value={adminName} onChange={(e) => setAdminName(e.target.value)} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Email Address</label>
+                    <label className={labelClass}>Administrative Email</label>
                     <input type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} className={inputClass} />
                   </div>
                 </div>
-                <button onClick={handleSaveProfile} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 text-sm">
-                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Save Profile
+                <button 
+                  onClick={handleSaveProfile} 
+                  disabled={saving} 
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl font-semibold text-xs uppercase tracking-wider active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {saving ? <Loader2 size={15} className="animate-spin" /> : <Save size={15} />} Save Credentials
                 </button>
 
-                <hr className="border-zinc-100 dark:border-zinc-800/50" />
+                <hr className="border-zinc-100 dark:border-zinc-800/60" />
 
                 <div>
-                  <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-1">Change Password</h3>
-                  <p className="text-sm text-zinc-500 mb-4">Update your admin account password.</p>
+                  <h3 className="font-serif text-lg font-bold text-zinc-900 dark:text-white mb-1">Access Passcode</h3>
+                  <p className="text-xs text-zinc-500 mb-4">Rotate your session password regularly for atelier security.</p>
                   {passwordMsg && (
-                    <div className={`p-3 rounded-xl text-sm mb-4 font-medium ${passwordMsg.includes('✅') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400'}`}>
+                    <div className={`p-3 rounded-xl text-xs mb-4 font-medium ${passwordMsg.includes('✅') ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20' : 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20'}`}>
                       {passwordMsg}
                     </div>
                   )}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
                       <label className={labelClass}>Current Password</label>
                       <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className={inputClass} />
                     </div>
                     <div>
-                      <label className={labelClass}>New Password</label>
+                      <label className={labelClass}>New Secure Password</label>
                       <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className={inputClass} />
                     </div>
                   </div>
-                  <button onClick={handleChangePassword} disabled={saving} className="mt-4 flex items-center gap-2 px-6 py-3 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-xl font-medium hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all disabled:opacity-50 text-sm">
-                    {saving ? <Loader2 size={16} className="animate-spin" /> : <Shield size={16} />} Update Password
+                  <button 
+                    onClick={handleChangePassword} 
+                    disabled={saving} 
+                    className="mt-4 inline-flex items-center gap-2 px-6 py-2.5 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-xl font-semibold text-xs uppercase tracking-wider hover:border-[#C5A059] hover:text-[#C5A059] active:scale-[0.98] transition-all disabled:opacity-50"
+                  >
+                    {saving ? <Loader2 size={15} className="animate-spin" /> : <Shield size={15} />} Rotate Passcode
                   </button>
                 </div>
               </div>
@@ -267,69 +282,78 @@ export default function AdminSettingsPage() {
 
             {/* Store Tab */}
             {activeTab === 'store' && (
-              <div className="p-8 space-y-8">
+              <div className="p-6 md:p-8 space-y-8">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-1">Store Settings</h2>
-                  <p className="text-sm text-zinc-500">Configure your store information.</p>
+                  <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-1">Storefront Identity</h2>
+                  <p className="text-xs text-zinc-500">Configure public atelier credentials, contact numbers, and currency.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelClass}>Store Name</label>
+                    <label className={labelClass}>Brand Name</label>
                     <input value={settings.storeName} onChange={(e) => setSettings({ ...settings, storeName: e.target.value })} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Currency</label>
-                    <select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })} className={inputClass}>
-                      <option value="GHS">GHS (₵)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="NGN">NGN (₦)</option>
-                      <option value="GBP">GBP (£)</option>
+                    <label className={labelClass}>Base Operating Currency</label>
+                    <select value={settings.currency} onChange={(e) => setSettings({ ...settings, currency: e.target.value })} className={inputClass + ' font-mono'}>
+                      <option value="GHS">GHS (Ghanaian Cedi - ₵)</option>
+                      <option value="USD">USD (US Dollar - $)</option>
+                      <option value="NGN">NGN (Nigerian Naira - ₦)</option>
+                      <option value="GBP">GBP (British Pound - £)</option>
                     </select>
                   </div>
                   <div>
-                    <label className={labelClass}>Contact Email</label>
+                    <label className={labelClass}>Client Inquiries Email</label>
                     <input type="email" value={settings.contactEmail} onChange={(e) => setSettings({ ...settings, contactEmail: e.target.value })} className={inputClass} />
                   </div>
                   <div>
-                    <label className={labelClass}>Contact Phone</label>
-                    <input value={settings.contactPhone} onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })} className={inputClass} />
+                    <label className={labelClass}>Client Inquiries Hotline</label>
+                    <input value={settings.contactPhone} onChange={(e) => setSettings({ ...settings, contactPhone: e.target.value })} className={inputClass + ' font-mono'} />
                   </div>
                 </div>
 
-                <button onClick={handleSaveSettings} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 text-sm">
-                  {saved ? <><Check size={16} /> Saved!</> : saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
+                <button 
+                  onClick={handleSaveSettings} 
+                  disabled={saving} 
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl font-semibold text-xs uppercase tracking-wider active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {saved ? <><Check size={15} /> Saved Successfully</> : saving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Changes</>}
                 </button>
               </div>
             )}
 
             {/* Delivery Tab */}
             {activeTab === 'delivery' && (
-              <div className="p-8 space-y-8">
+              <div className="p-6 md:p-8 space-y-8">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-1">Delivery Settings</h2>
-                  <p className="text-sm text-zinc-500">Configure delivery fees, regions, and time estimates.</p>
+                  <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-1">Fulfillment & Courier Logistics</h2>
+                  <p className="text-xs text-zinc-500">Configure base shipping fees, supported courier destinations, and timelines.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className={labelClass}>Delivery Fee (₵)</label>
-                    <input type="number" value={settings.deliveryFee} onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) || 0 })} className={inputClass} />
+                    <label className={labelClass}>Base Dispatch Fee (₵)</label>
+                    <input 
+                      type="number" 
+                      value={settings.deliveryFee} 
+                      onChange={(e) => setSettings({ ...settings, deliveryFee: parseFloat(e.target.value) || 0 })} 
+                      className={inputClass + ' font-mono tabular-nums'} 
+                    />
                   </div>
                   <div>
-                    <label className={labelClass}>Estimated Delivery Time</label>
-                    <input value={settings.estimatedDeliveryTime} onChange={(e) => setSettings({ ...settings, estimatedDeliveryTime: e.target.value })} placeholder="e.g. 3-5 business days" className={inputClass} />
+                    <label className={labelClass}>Estimated Transit Window</label>
+                    <input value={settings.estimatedDeliveryTime} onChange={(e) => setSettings({ ...settings, estimatedDeliveryTime: e.target.value })} placeholder="e.g. 24-48 hours (Accra), 3-5 days (Worldwide)" className={inputClass} />
                   </div>
                 </div>
 
                 <div>
-                  <label className={labelClass}>Delivery Regions</label>
+                  <label className={labelClass}>Authorized Delivery Zones</label>
                   <div className="flex flex-wrap gap-2 mb-3">
                     {settings.deliveryRegions?.map((region: string) => (
-                      <span key={region} className="flex items-center gap-1.5 px-3 py-1.5 bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400 rounded-full text-sm font-medium border border-violet-200 dark:border-violet-500/20">
+                      <span key={region} className="flex items-center gap-1.5 px-3 py-1 bg-[#C5A059]/10 text-[#C5A059] border border-[#C5A059]/30 rounded-full text-xs font-semibold">
                         {region}
                         <button onClick={() => removeRegion(region)} className="hover:text-rose-500 transition-colors">
-                          <X size={14} />
+                          <X size={12} />
                         </button>
                       </span>
                     ))}
@@ -339,78 +363,90 @@ export default function AdminSettingsPage() {
                       value={newRegion}
                       onChange={(e) => setNewRegion(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addRegion()}
-                      placeholder="Add a region..."
+                      placeholder="Add dispatch territory (e.g. Greater Accra, Kumasi, Takoradi)..."
                       className={inputClass + ' flex-1'}
                     />
-                    <button onClick={addRegion} className="px-4 py-3 bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400 rounded-xl hover:bg-violet-100 dark:hover:bg-violet-500/20 transition-colors border border-violet-200 dark:border-violet-500/20">
-                      <Plus size={18} />
+                    <button 
+                      onClick={addRegion} 
+                      className="px-4 py-2.5 bg-zinc-900 text-white dark:bg-zinc-800 hover:text-[#C5A059] active:scale-95 rounded-xl transition-all"
+                    >
+                      <Plus size={16} />
                     </button>
                   </div>
                 </div>
 
-                <button onClick={handleSaveSettings} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 text-sm">
-                  {saved ? <><Check size={16} /> Saved!</> : saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
+                <button 
+                  onClick={handleSaveSettings} 
+                  disabled={saving} 
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl font-semibold text-xs uppercase tracking-wider active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {saved ? <><Check size={15} /> Saved Successfully</> : saving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Changes</>}
                 </button>
               </div>
             )}
 
             {/* Payment Tab */}
             {activeTab === 'payment' && (
-              <div className="p-8 space-y-8">
+              <div className="p-6 md:p-8 space-y-8">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-1">Payment Settings</h2>
-                  <p className="text-sm text-zinc-500">Enable or disable payment methods.</p>
+                  <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-1">Payment Gateways</h2>
+                  <p className="text-xs text-zinc-500">Toggle enabled checkout gateways for clients.</p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {settings.paymentMethods?.length > 0 ? settings.paymentMethods.map((method: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-5 border border-zinc-100 dark:border-zinc-800/50">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${method.enabled ? 'bg-emerald-100 dark:bg-emerald-500/10' : 'bg-zinc-200 dark:bg-zinc-800'}`}>
-                          <CreditCard size={20} className={method.enabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-400'} />
+                    <div key={index} className="flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-900/60 rounded-xl p-4 border border-zinc-100 dark:border-zinc-800/60">
+                      <div className="flex items-center gap-3.5">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${method.enabled ? 'bg-[#C5A059]/10 text-[#C5A059]' : 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400'}`}>
+                          <CreditCard size={18} />
                         </div>
                         <div>
-                          <p className="font-medium text-zinc-900 dark:text-white">{method.name}</p>
-                          <p className="text-xs text-zinc-500">{method.enabled ? 'Active' : 'Disabled'}</p>
+                          <p className="font-semibold text-zinc-900 dark:text-white text-sm">{method.name}</p>
+                          <p className="text-xs text-zinc-500">{method.enabled ? 'Active at checkout' : 'Disabled'}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => togglePaymentMethod(index)}
-                        className={`relative w-12 h-7 rounded-full transition-colors ${method.enabled ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${method.enabled ? 'bg-[#C5A059]' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                       >
-                        <div className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${method.enabled ? 'translate-x-5.5 left-0' : 'left-0.5'}`}
-                          style={{ transform: method.enabled ? 'translateX(22px)' : 'translateX(0)' }}
+                        <div 
+                          className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
+                          style={{ transform: method.enabled ? 'translateX(22px)' : 'translateX(2px)' }}
                         />
                       </button>
                     </div>
                   )) : (
-                    <p className="text-zinc-500 text-sm text-center py-8">No payment methods configured. Save settings to create defaults.</p>
+                    <p className="text-zinc-500 text-xs text-center py-8">No payment methods configured.</p>
                   )}
                 </div>
 
-                <button onClick={handleSaveSettings} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 text-sm">
-                  {saved ? <><Check size={16} /> Saved!</> : saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
+                <button 
+                  onClick={handleSaveSettings} 
+                  disabled={saving} 
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl font-semibold text-xs uppercase tracking-wider active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {saved ? <><Check size={15} /> Saved Successfully</> : saving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Changes</>}
                 </button>
               </div>
             )}
 
             {/* Notifications Tab */}
             {activeTab === 'notifications' && (
-              <div className="p-8 space-y-8">
+              <div className="p-6 md:p-8 space-y-8">
                 <div>
-                  <h2 className="text-xl font-bold text-zinc-900 dark:text-white mb-1">Notification Preferences</h2>
-                  <p className="text-sm text-zinc-500">Toggle email/SMS notifications for store events.</p>
+                  <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-1">Automated Notifications</h2>
+                  <p className="text-xs text-zinc-500">Configure email and push triggers for customer lifecycle events.</p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {[
-                    { key: 'newOrder', label: 'New Orders', desc: 'Get notified when a new order is placed.' },
-                    { key: 'statusUpdate', label: 'Order Status Updates', desc: 'Notify customers when order status changes.' },
+                    { key: 'newOrder', label: 'Client Transaction Alerts', desc: 'Notify administrator immediately when new order is finalized.' },
+                    { key: 'statusUpdate', label: 'Order Status Dispatch', desc: 'Send automated email/SMS to client when order is marked shipped or delivered.' },
                   ].map((item) => (
-                    <div key={item.key} className="flex items-center justify-between bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl p-5 border border-zinc-100 dark:border-zinc-800/50">
+                    <div key={item.key} className="flex items-center justify-between bg-zinc-50/80 dark:bg-zinc-900/60 rounded-xl p-4 border border-zinc-100 dark:border-zinc-800/60">
                       <div>
-                        <p className="font-medium text-zinc-900 dark:text-white">{item.label}</p>
-                        <p className="text-sm text-zinc-500 mt-0.5">{item.desc}</p>
+                        <p className="font-semibold text-zinc-900 dark:text-white text-sm">{item.label}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">{item.desc}</p>
                       </div>
                       <button
                         onClick={() => setSettings({
@@ -420,9 +456,10 @@ export default function AdminSettingsPage() {
                             [item.key]: !settings.notifications?.[item.key],
                           }
                         })}
-                        className={`relative w-12 h-7 rounded-full transition-colors ${settings.notifications?.[item.key] ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-zinc-700'}`}
+                        className={`relative w-11 h-6 rounded-full transition-colors ${settings.notifications?.[item.key] ? 'bg-[#C5A059]' : 'bg-zinc-300 dark:bg-zinc-700'}`}
                       >
-                        <div className="absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform"
+                        <div 
+                          className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform"
                           style={{ transform: settings.notifications?.[item.key] ? 'translateX(22px)' : 'translateX(2px)' }}
                         />
                       </button>
@@ -430,8 +467,12 @@ export default function AdminSettingsPage() {
                   ))}
                 </div>
 
-                <button onClick={handleSaveSettings} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all disabled:opacity-50 text-sm">
-                  {saved ? <><Check size={16} /> Saved!</> : saving ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : <><Save size={16} /> Save Changes</>}
+                <button 
+                  onClick={handleSaveSettings} 
+                  disabled={saving} 
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl font-semibold text-xs uppercase tracking-wider active:scale-[0.98] transition-all disabled:opacity-50 shadow-sm"
+                >
+                  {saved ? <><Check size={15} /> Saved Successfully</> : saving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : <><Save size={15} /> Save Changes</>}
                 </button>
               </div>
             )}
