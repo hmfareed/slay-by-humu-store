@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '@/src/context/NotificationContext';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 export default function SlideOutCart() {
   const items = useCartStore((state) => state.items);
@@ -82,7 +83,7 @@ export default function SlideOutCart() {
                 >
                   <div className="w-24 h-32 bg-brand-bg relative overflow-hidden">
                     {item.product.images?.[0] ? (
-                      <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+                      <img src={getOptimizedImageUrl(item.product.images[0], 256)} alt={item.product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
                     ) : null}
                   </div>
 

@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle, CheckCircle2, AlertCircle, RefreshCw, UploadCloud } from 'lucide-react';
+import ProductThumbnail from '@/components/admin/ProductThumbnail';
 
 interface Product {
   _id: string;
@@ -48,7 +49,9 @@ export default function AdminProductsPage() {
     badge: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [editingProductImage, setEditingProductImage] = useState<string | null>(null);
 
   // System popup state (no browser confirm/alert)
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
@@ -77,7 +80,9 @@ export default function AdminProductsPage() {
       badge: '',
     });
     setImageFile(null);
+    setPreviewUrl(null);
     setEditingProductId(null);
+    setEditingProductImage(null);
     setMessage('');
   };
 
@@ -92,6 +97,7 @@ export default function AdminProductsPage() {
       setProducts(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching products:', error);
+      showToast('error', 'Failed to retrieve products from server.');
     } finally {
       setLoading(false);
     }
@@ -103,6 +109,16 @@ export default function AdminProductsPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setImageFile(file);
+    if (file) {
+      setPreviewUrl(URL.createObjectURL(file));
+    } else {
+      setPreviewUrl(null);
+    }
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
@@ -129,7 +145,7 @@ export default function AdminProductsPage() {
     data.append('styling', formData.styling);
     data.append('badge', formData.badge);
     if (imageFile) {
-      data.append('images', imageFile);   
+      data.append('images', imageFile);
     }
 
     try {
@@ -148,15 +164,15 @@ export default function AdminProductsPage() {
       const result = await res.json();
 
       if (res.ok) {
+        showToast('success', editingProductId ? 'Product updated successfully.' : 'New product published to catalog.');
         resetForm();
         setIsModalOpen(false);
         fetchProducts();
-        showToast('success', editingProductId ? 'Product updated successfully.' : 'Product published to boutique.');
       } else {
-        setMessage(result.message || `Failed to ${editingProductId ? 'update' : 'add'} product`);
+        setMessage(result.message || `Failed to ${editingProductId ? 'update' : 'publish'} product.`);
       }
     } catch (error) {
-      setMessage(`Error ${editingProductId ? 'updating' : 'uploading'} product.`);
+      setMessage(`Server error while ${editingProductId ? 'updating' : 'uploading'} product.`);
     } finally {
       setUploading(false);
     }
@@ -164,6 +180,9 @@ export default function AdminProductsPage() {
 
   const handleEdit = (product: Product) => {
     setEditingProductId(product._id);
+    setEditingProductImage(product.images?.[0] || null);
+    setPreviewUrl(null);
+    setImageFile(null);
     setFormData({
       name: product.name,
       description: product.description,
@@ -191,13 +210,13 @@ export default function AdminProductsPage() {
       if (res.ok) {
         setProducts(prev => prev.filter(p => p._id !== id));
         setProductToDelete(null);
-        showToast('success', `${name} deleted successfully.`);
+        showToast('success', `"${name}" removed from catalog.`);
       } else {
         const data = await res.json();
-        showToast('error', data.message || 'Failed to delete product');
+        showToast('error', data.message || 'Failed to delete product.');
       }
     } catch (error) {
-      showToast('error', 'Failed to delete product');
+      showToast('error', 'Failed to delete product.');
     } finally {
       setIsDeletingProduct(false);
     }
@@ -212,29 +231,29 @@ export default function AdminProductsPage() {
   });
 
   return (
-    <div className="space-y-8 pb-12 relative">
-      {/* In-App Floating Toast Notification (System Popup) */}
+    <div className="space-y-8 pb-12">
+      {/* Floating System Toast */}
       <AnimatePresence>
         {notification && (
           <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl border text-xs font-semibold uppercase tracking-wider backdrop-blur-md ${
+            className={`fixed top-6 right-6 z-[300] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-2xl border text-sm font-medium ${
               notification.type === 'success'
-                ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 border-[#C5A059]/40'
-                : 'bg-rose-950/95 text-rose-200 border-rose-800'
+                ? 'bg-emerald-950/90 text-emerald-200 border-emerald-800/80 backdrop-blur-md'
+                : 'bg-rose-950/90 text-rose-200 border-rose-800/80 backdrop-blur-md'
             }`}
           >
             {notification.type === 'success' ? (
-              <CheckCircle2 size={16} className="text-[#C5A059] flex-shrink-0" />
+              <CheckCircle2 size={18} className="text-emerald-400 flex-shrink-0" />
             ) : (
-              <AlertCircle size={16} className="text-rose-400 flex-shrink-0" />
+              <AlertCircle size={18} className="text-rose-400 flex-shrink-0" />
             )}
             <span>{notification.message}</span>
-            <button 
-              onClick={() => setNotification(null)} 
-              className="ml-2 p-1 text-zinc-400 hover:text-white dark:hover:text-zinc-900 transition-colors"
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-2 text-zinc-400 hover:text-white p-1 rounded-lg"
             >
               <X size={14} />
             </button>
@@ -294,7 +313,7 @@ export default function AdminProductsPage() {
             {[1, 2, 3].map(i => (
               <div key={i} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm animate-pulse space-y-3">
                 <div className="flex gap-4">
-                  <div className="w-20 h-20 rounded-xl bg-zinc-200 dark:bg-zinc-800 flex-shrink-0"></div>
+                  <div className="w-20 h-20 rounded-2xl bg-zinc-200 dark:bg-zinc-800 flex-shrink-0"></div>
                   <div className="space-y-2 flex-1">
                     <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
                     <div className="h-3 w-20 bg-zinc-100 dark:bg-zinc-800/60 rounded"></div>
@@ -310,13 +329,12 @@ export default function AdminProductsPage() {
           filteredProducts.map((product) => (
             <div key={product._id} className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm">
               <div className="flex gap-4">
-                <div className="w-20 h-20 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0 border border-zinc-200/60 dark:border-zinc-800/60">
-                  {product.images?.[0] ? (
-                    <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center"><ImageIcon size={22} className="text-zinc-400" /></div>
-                  )}
-                </div>
+                <ProductThumbnail 
+                  src={product.images?.[0]} 
+                  name={product.name} 
+                  size="lg" 
+                  badge={product.badge} 
+                />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-zinc-900 dark:text-white truncate text-sm">{product.name}</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">{product.category || 'Uncategorized'}</p>
@@ -407,13 +425,11 @@ export default function AdminProductsPage() {
                   <tr key={product._id} className="hover:bg-zinc-50/60 dark:hover:bg-zinc-900/40 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-zinc-100 dark:bg-zinc-800 overflow-hidden flex-shrink-0 flex items-center justify-center border border-zinc-200/60 dark:border-zinc-800/60">
-                          {product.images?.[0] ? (
-                            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <ImageIcon size={18} className="text-zinc-400" />
-                          )}
-                        </div>
+                        <ProductThumbnail 
+                          src={product.images?.[0]} 
+                          name={product.name} 
+                          size="sm" 
+                        />
                         <div>
                           <p className="font-semibold text-zinc-900 dark:text-white text-sm">{product.name}</p>
                           <p className="text-xs text-zinc-500 line-clamp-1 w-64 mt-0.5">{product.description}</p>
@@ -481,9 +497,11 @@ export default function AdminProductsPage() {
               <div className="p-6 border-b border-zinc-100 dark:border-zinc-800/80 flex justify-between items-center bg-zinc-50/50 dark:bg-zinc-900/50">
                 <div>
                   <h2 className="font-serif text-xl font-bold text-zinc-900 dark:text-white">
-                    {editingProductId ? 'Edit Atelier Piece' : 'Add New Product'}
+                    {editingProductId ? 'Edit Product Specifications' : 'Publish New Hair Product'}
                   </h2>
-                  <p className="text-xs text-zinc-500 mt-0.5">Provide detailed specifications for client discovery</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                    Configure pricing, texture, lace density, and media assets.
+                  </p>
                 </div>
                 <button 
                   onClick={() => setIsModalOpen(false)} 
@@ -609,16 +627,47 @@ export default function AdminProductsPage() {
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-zinc-700 dark:text-zinc-300">Product Image {editingProductId && '(Optional)'}</label>
-                    <div className="px-4 py-6 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-[#C5A059] transition-colors rounded-2xl flex flex-col items-center justify-center bg-zinc-50/50 dark:bg-zinc-900/40">
-                      <ImageIcon size={28} className="text-[#C5A059] mb-2" />
-                      <input 
-                        type="file" 
-                        accept="image/*" 
-                        onChange={(e) => setImageFile(e.target.files?.[0] || null)} 
-                        required={!editingProductId} 
-                        className="text-xs text-zinc-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C5A059]/10 file:text-[#C5A059] hover:file:bg-[#C5A059]/20 cursor-pointer" 
-                      />
+                    <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-zinc-700 dark:text-zinc-300">
+                      Product Image {editingProductId && '(Optional if keeping existing)'}
+                    </label>
+                    <div className="p-4 border-2 border-dashed border-zinc-300 dark:border-zinc-700 hover:border-[#C5A059] transition-colors rounded-2xl flex flex-col sm:flex-row items-center gap-4 bg-zinc-50/50 dark:bg-zinc-900/40">
+                      {(previewUrl || editingProductImage) ? (
+                        <div className="relative flex-shrink-0">
+                          {previewUrl ? (
+                            <img 
+                              src={previewUrl} 
+                              alt="Upload preview" 
+                              className="w-20 h-20 rounded-xl object-cover border border-zinc-200 dark:border-zinc-700" 
+                            />
+                          ) : (
+                            <ProductThumbnail 
+                              src={editingProductImage} 
+                              name="Current product image" 
+                              size="lg" 
+                            />
+                          )}
+                          <span className="absolute -top-2 -right-2 px-1.5 py-0.5 text-[9px] font-bold uppercase rounded bg-[#C5A059] text-black">
+                            {previewUrl ? 'New' : 'Current'}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-[#C5A059] flex-shrink-0">
+                          <UploadCloud size={24} />
+                        </div>
+                      )}
+
+                      <div className="flex-1 text-center sm:text-left">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageFileChange} 
+                          required={!editingProductId && !imageFile} 
+                          className="text-xs text-zinc-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C5A059]/10 file:text-[#C5A059] hover:file:bg-[#C5A059]/20 cursor-pointer" 
+                        />
+                        <p className="text-[11px] text-zinc-400 mt-1.5">
+                          High-resolution JPEG, PNG, or WebP. Automatically optimized upon upload.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </form>

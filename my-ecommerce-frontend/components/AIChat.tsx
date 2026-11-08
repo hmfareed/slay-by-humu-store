@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, Send, Bot, User, MessageCircle, Sparkles, ShoppingBag, Package, ExternalLink, Search, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -297,7 +298,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
           className="bg-brand-bg rounded-xl overflow-hidden border border-brand-text/5 hover:border-brand-accent/30 transition-all group">
           <div className="aspect-square overflow-hidden bg-brand-text/5">
             {p.images?.[0] ? (
-              <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+              <img src={getOptimizedImageUrl(p.images[0], 256)} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
             ) : (
               <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-8 h-8 text-brand-muted" /></div>
             )}
@@ -346,7 +347,7 @@ export default function AIChat({ isOpen, onClose, userName, authToken, cartItems
         return (
           <div key={idx} className="flex items-center gap-3 p-2.5 bg-brand-bg rounded-xl border border-brand-text/5">
             <div className="w-10 h-10 rounded-lg overflow-hidden bg-brand-text/5 flex-shrink-0">
-              {product.images?.[0] ? <img src={product.images[0]} className="w-full h-full object-cover" /> : <ShoppingBag className="w-5 h-5 m-auto text-brand-muted" />}
+              {product.images?.[0] ? <img src={getOptimizedImageUrl(product.images[0], 128)} className="w-full h-full object-cover" /> : <ShoppingBag className="w-5 h-5 m-auto text-brand-muted" />}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-sans font-medium text-xs truncate">{product.name}</p>

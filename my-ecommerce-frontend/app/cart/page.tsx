@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Minus, Plus, Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 export default function CartPage() {
   const items = useCartStore((s) => s.items);
@@ -132,7 +133,7 @@ export default function CartPage() {
                     <Link href={`/products/${item.product._id}`} className="w-24 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-brand-bg">
                       {item.product.images?.[0] ? (
                         <img
-                          src={item.product.images[0]}
+                          src={getOptimizedImageUrl(item.product.images[0], 256)}
                           alt={item.product.name}
                           className="w-full h-full object-cover"
                         />

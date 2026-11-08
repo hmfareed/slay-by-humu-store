@@ -184,7 +184,13 @@ export default function CustomerProfilePage() {
         <div className="flex flex-col sm:flex-row items-start gap-6">
           <div className="w-20 h-20 rounded-2xl flex items-center justify-center font-serif text-3xl font-bold text-[#C5A059] bg-zinc-900 dark:bg-zinc-800 border-2 border-[#C5A059]/30 overflow-hidden flex-shrink-0 shadow-sm">
             {user.avatar ? (
-              <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+              <img 
+                src={user.avatar} 
+                alt="" 
+                referrerPolicy="no-referrer" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }} 
+                className="w-full h-full object-cover" 
+              />
             ) : (
               user.name.charAt(0).toUpperCase()
             )}

@@ -5,6 +5,7 @@ import { Search, Loader2 } from 'lucide-react';
 import { API_URL } from '@/src/lib/api';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
@@ -105,7 +106,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                 >
                   <div className="w-10 h-10 rounded-lg overflow-hidden bg-brand-bg flex-shrink-0">
                     {product.images?.[0] ? (
-                      <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+                      <img src={getOptimizedImageUrl(product.images[0], 128)} alt={product.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full bg-brand-text/10" />
                     )}

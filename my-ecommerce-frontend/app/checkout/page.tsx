@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useAuth } from '@/src/context/AuthContext';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 export default function CheckoutPage() {
   const { showNotification } = useNotification();
@@ -562,7 +563,7 @@ export default function CheckoutPage() {
                     <div className="flex items-center gap-5">
                       <div className="w-14 h-20 bg-brand-text/5 overflow-hidden rounded-xl flex-shrink-0">
                         {item.product.images?.[0] ? (
-                          <img src={item.product.images[0]} alt={item.product.name} className="w-full h-full object-cover dark:mix-blend-normal mix-blend-multiply" />
+                          <img src={getOptimizedImageUrl(item.product.images[0], 256)} alt={item.product.name} className="w-full h-full object-cover dark:mix-blend-normal mix-blend-multiply" />
                         ) : null}
                       </div>
                       <span className="max-w-[140px] truncate text-base leading-snug">

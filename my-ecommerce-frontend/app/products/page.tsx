@@ -8,6 +8,7 @@ import { ShoppingBag, User, Menu, Filter, X } from 'lucide-react';
 import QuickViewModal from '@/components/QuickViewModal';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 import { Suspense } from 'react';
 
@@ -232,14 +233,14 @@ function ProductsContent() {
                   >
                     <Link href={`/products/${product._id}`} className="flex-1 relative overflow-hidden bg-brand-panel border border-brand-text/5 shadow-soft rounded-3xl mb-6 aspect-[3/4]">
                       <img 
-                        src={product.images?.[0] || 'https://via.placeholder.com/600'} 
+                        src={getOptimizedImageUrl(product.images?.[0], 640) || 'https://via.placeholder.com/600'} 
                         alt={product.name} 
                         className="w-full h-full object-cover transition-opacity duration-[1.5s] group-hover:opacity-0 mix-blend-multiply dark:mix-blend-normal absolute inset-0 z-10 bg-brand-bg rounded-3xl"
                       />
                       
                       {product.images && product.images.length > 1 && (
                         <img 
-                          src={product.images[1]} 
+                          src={getOptimizedImageUrl(product.images[1], 640)} 
                           alt={`${product.name} lifestyle`}
                           className="w-full h-full object-cover transition-transform duration-[2s] scale-105 group-hover:scale-100 mix-blend-multiply dark:mix-blend-normal absolute inset-0 z-0 bg-brand-bg rounded-3xl"
                         />

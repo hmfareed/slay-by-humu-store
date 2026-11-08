@@ -7,6 +7,7 @@ import { Heart, ShoppingBag, ArrowLeft, Trash2, Package } from 'lucide-react';
 import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useNotification } from '@/src/context/NotificationContext';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 export default function WishlistPage() {
   const items = useWishlistStore((s) => s.items);
@@ -107,7 +108,7 @@ export default function WishlistPage() {
                   <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-panel border border-brand-text/5 mb-3">
                     <Link href={`/products/${product._id}`}>
                       <img
-                        src={product.images?.[0] || ''}
+                        src={getOptimizedImageUrl(product.images?.[0], 640)}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-[1s] group-hover:scale-105"
                       />

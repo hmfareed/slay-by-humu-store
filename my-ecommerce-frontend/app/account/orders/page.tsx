@@ -7,6 +7,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useRouter } from 'next/navigation';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 const API = API_URL;
 
@@ -207,7 +208,7 @@ export default function OrdersPage() {
                       {/* First product image */}
                       <div className="w-14 h-14 rounded-xl overflow-hidden bg-brand-bg flex-shrink-0">
                         {order.items[0]?.product?.images?.[0] ? (
-                          <img src={order.items[0].product.images[0]} alt="" className="w-full h-full object-cover" />
+                          <img src={getOptimizedImageUrl(order.items[0].product.images[0], 128)} alt="" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center"><Package className="w-6 h-6 text-brand-muted" /></div>
                         )}
@@ -300,7 +301,7 @@ export default function OrdersPage() {
                           <div key={i} className="flex items-center gap-3">
                             <div className="w-10 h-12 rounded-lg overflow-hidden bg-brand-bg flex-shrink-0">
                               {item.product?.images?.[0] ? (
-                                <img src={item.product.images[0]} alt="" className="w-full h-full object-cover" />
+                                <img src={getOptimizedImageUrl(item.product.images[0], 128)} alt="" className="w-full h-full object-cover" />
                               ) : null}
                             </div>
                             <div className="flex-1 min-w-0">

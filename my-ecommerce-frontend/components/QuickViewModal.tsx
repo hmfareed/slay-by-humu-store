@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Check } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface Product {
   _id: string;
@@ -75,7 +76,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
             <div className="w-full md:w-1/2 h-64 md:h-auto bg-brand-text/5 relative">
               {product.images?.[0] ? (
                 <img 
-                  src={product.images[0]} 
+                  src={getOptimizedImageUrl(product.images[0], 640)} 
                   alt={product.name} 
                   className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" 
                 />

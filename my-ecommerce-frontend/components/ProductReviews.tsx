@@ -6,6 +6,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
 import { Star, Upload, X, Loader2, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface Review {
   _id: string;
@@ -292,7 +293,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
                 <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                   {review.images.map((img, idx) => (
                     <div key={idx} className="w-24 h-24 rounded-xl overflow-hidden flex-shrink-0 border border-brand-text/10">
-                      <img src={img} alt={`Review photo ${idx + 1}`} className="w-full h-full object-cover" />
+                      <img src={getOptimizedImageUrl(img, 256)} alt={`Review photo ${idx + 1}`} className="w-full h-full object-cover" />
                     </div>
                   ))}
                 </div>

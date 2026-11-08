@@ -7,6 +7,7 @@ import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface Product {
   _id: string;
@@ -235,7 +236,7 @@ export default function CategoriesPage() {
                   <Link href={`/products/${product._id}`} className="block">
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-panel border border-brand-text/5 mb-3">
                       <img
-                        src={product.images[0]}
+                        src={getOptimizedImageUrl(product.images[0], 640)}
                         alt={product.name}
                         loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-[1s] group-hover:scale-105"

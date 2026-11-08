@@ -11,6 +11,7 @@ import SearchBar from '@/components/SearchBar';
 import QuickViewModal from '@/components/QuickViewModal';
 import Footer from '@/components/Footer';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface Product {
   _id: string;
@@ -180,9 +181,10 @@ export default function HomePage() {
         <section className="relative w-full overflow-hidden bg-brand-panel" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
           <div key={currentHeroProduct._id} className="absolute inset-0">
             <img
-              src={currentHeroProduct.images[0]}
+              src={getOptimizedImageUrl(currentHeroProduct.images[0], 1200)}
               alt={currentHeroProduct.name}
               className="w-full h-full object-cover object-center"
+              loading="eager"
             />
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
@@ -327,8 +329,9 @@ export default function HomePage() {
                   >
                     <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-brand-panel border border-brand-text/5 mb-4">
                       <img
-                        src={product.images[0]}
+                        src={getOptimizedImageUrl(product.images[0], 640)}
                         alt={product.name}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-105"
                       />
                       {/* Hover overlay */}

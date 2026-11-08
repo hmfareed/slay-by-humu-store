@@ -19,6 +19,7 @@ import {
   Ban,
   CheckCircle2 
 } from 'lucide-react';
+import ProductThumbnail from '@/components/admin/ProductThumbnail';
 
 interface Order {
   _id: string;
@@ -681,13 +682,11 @@ export default function AdminOrdersPage() {
                   <div className="space-y-3">
                     {selectedOrder.items?.map((item, i) => (
                       <div key={i} className="flex items-center gap-3 bg-zinc-50/80 dark:bg-zinc-900/60 rounded-2xl p-3 border border-zinc-100 dark:border-zinc-800/60">
-                        <div className="w-14 h-14 rounded-xl bg-zinc-200 dark:bg-zinc-800 overflow-hidden flex-shrink-0">
-                          {item.product?.images?.[0] ? (
-                            <img src={item.product.images[0]} alt={item.product?.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-zinc-400"><Package size={20} /></div>
-                          )}
-                        </div>
+                        <ProductThumbnail 
+                          src={item.product?.images?.[0]} 
+                          name={item.product?.name} 
+                          size="md" 
+                        />
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold text-zinc-900 dark:text-white text-sm truncate">{item.product?.name || 'Product'}</p>
                           <p className="text-xs text-zinc-500 font-mono tabular-nums mt-0.5">

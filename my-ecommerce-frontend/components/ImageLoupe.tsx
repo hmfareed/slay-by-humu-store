@@ -1,10 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 export default function ImageLoupe({ src, alt }: { src: string; alt: string; }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [showLoupe, setShowLoupe] = useState(false);
+
+  const optimizedSrc = getOptimizedImageUrl(src, 1200);
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
@@ -21,13 +24,13 @@ export default function ImageLoupe({ src, alt }: { src: string; alt: string; }) 
       onPointerMove={handlePointerMove}
     >
       {/* Base Image */}
-      <img src={src} alt={alt} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+      <img src={optimizedSrc} alt={alt} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
       
       {/* Magnifier overlay */}
       <div 
         className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"
         style={{
-          backgroundImage: `url(${src})`,
+          backgroundImage: `url(${optimizedSrc})`,
           backgroundPosition: `${pos.x}% ${pos.y}%`,
           backgroundSize: '250%',
           backgroundRepeat: 'no-repeat',
@@ -41,7 +44,7 @@ export default function ImageLoupe({ src, alt }: { src: string; alt: string; }) 
           style={{
             left: `calc(${pos.x}% - 6rem)`,
             top: `calc(${pos.y}% - 6rem)`,
-            backgroundImage: `url(${src})`,
+            backgroundImage: `url(${optimizedSrc})`,
             backgroundPosition: `${pos.x}% ${pos.y}%`,
             backgroundSize: '300%', // Slightly larger than overlay
           }}

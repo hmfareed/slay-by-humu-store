@@ -14,6 +14,7 @@ import MagneticButton from '@/components/MagneticButton';
 import ProductReviews from '@/components/ProductReviews';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
+import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface Product {
   _id: string;
@@ -217,7 +218,7 @@ export default function ProductDetailPage() {
                     activeImage === idx ? 'border-brand-accent scale-95 shadow-soft ring-4 ring-brand-accent/20' : 'border-transparent hover:border-brand-text/20'
                   }`}
                 >
-                  <img src={img} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+                  <img src={getOptimizedImageUrl(img, 256)} alt={`${product.name} view ${idx + 1}`} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
                 </button>
               ))}
             </div>
