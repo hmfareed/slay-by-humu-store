@@ -26,7 +26,8 @@ export default function BottomNav() {
   // Hide on desktop
   // Hide on certain pages like product detail or checkout
   const hiddenPaths = ['/checkout', '/admin'];
-  const shouldHide = hiddenPaths.some((p) => pathname.startsWith(p));
+  const isProductDetail = pathname.startsWith('/products/') && pathname.split('/').filter(Boolean).length > 1;
+  const shouldHide = hiddenPaths.some((p) => pathname.startsWith(p)) || isProductDetail;
   if (shouldHide) return null;
 
   return (

@@ -1,7 +1,7 @@
 // app/products/[id]/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCartStore } from '@/src/store/cartStore';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -30,6 +30,18 @@ interface Product {
   badge?: string;
 }
 
+const HAIR_LENGTHS = [
+  { length: '18"', label: '18 Inch', priceDelta: 0 },
+  { length: '22"', label: '22 Inch', priceDelta: 150 },
+  { length: '26"', label: '26 Inch', priceDelta: 320 },
+  { length: '30"', label: '30 Inch', priceDelta: 500 },
+];
+
+const HAIR_DENSITIES = [
+  { density: '180%', label: '180% Natural Glam', priceDelta: 0 },
+  { density: '200%', label: '200% Full Regal', priceDelta: 120 },
+];
+
 export default function ProductDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -39,8 +51,18 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [activeImage, setActiveImage] = useState(0);
+
+  // Variant selections
+  const [selectedLength, setSelectedLength] = useState(HAIR_LENGTHS[0].length);
+  const [selectedDensity, setSelectedDensity] = useState(HAIR_DENSITIES[0].density);
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const buyButtonRef = useRef<HTMLDivElement>(null);
   
   const addToCart = useCartStore((state) => state.addItem);
+
+  const activeLengthObj = HAIR_LENGTHS.find((l) => l.length === selectedLength) || HAIR_LENGTHS[0];
+  const activeDensityObj = HAIR_DENSITIES.find((d) => d.density === selectedDensity) || HAIR_DENSITIES[0];
+  const currentPrice = (product?.price || 0) + activeLengthObj.priceDelta + activeDensityObj.priceDelta;
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -83,7 +105,24 @@ export default function ProductDetailPage() {
     };
 
     if (id) fetchProduct();
-  }, [id]);
+  }, [id, user]);
+
+  // Observer for floating sticky mobile buy bar
+  useEffect(() => {
+    const target = buyButtonRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Show sticky bar when main button scrolls out above viewport
+        setShowStickyBar(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: 0 }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [product]);
 
   if (loading) {
     return (
@@ -107,8 +146,15 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     if (!product) return;
-    await addToCart(product);
-    showNotification(`${product.name} added to your collection`, 'success');
+    const itemToAdd = {
+      ...product,
+      price: currentPrice,
+      selectedLength: activeLengthObj.length,
+      selectedDensity: activeDensityObj.density,
+      itemKey: `${product._id}-${activeLengthObj.length}-${activeDensityObj.density}`,
+    };
+    await addToCart(itemToAdd as any);
+    showNotification(`${product.name} (${activeLengthObj.length}, ${activeDensityObj.density}) added to your collection`, 'success');
     window.dispatchEvent(new Event('open-mini-cart'));
   };
 
@@ -242,16 +288,21 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           
-          <div className="text-3xl font-sans tracking-tight mb-8">
-            ₵{product.price.toFixed(2)}
+          <div className="text-3xl font-sans font-light tracking-tight mb-8 flex items-baseline gap-3">
+            <span className="text-brand-text font-medium">₵{currentPrice.toFixed(2)}</span>
+            {(activeLengthObj.priceDelta > 0 || activeDensityObj.priceDelta > 0) && (
+              <span className="text-xs text-brand-muted uppercase tracking-wider font-sans">
+                (includes length & density selections)
+              </span>
+            )}
           </div>
 
-          <div className="prose prose-p:font-sans prose-p:font-light prose-p:text-brand-muted prose-p:leading-relaxed mb-12 border-t border-brand-text/10 pt-8">
+          <div className="prose prose-p:font-sans prose-p:font-light prose-p:text-brand-muted prose-p:leading-relaxed mb-8 border-t border-brand-text/10 pt-8">
             <p>{product.description}</p>
           </div>
 
           {/* Details Accents */}
-          <div className="grid grid-cols-2 gap-6 mb-12 font-sans text-sm">
+          <div className="grid grid-cols-2 gap-6 mb-8 font-sans text-sm">
             <div>
               <p className="text-brand-muted uppercase tracking-widest text-[10px] font-semibold mb-2">Texture</p>
               <p className="font-medium">{product.texture || 'Raw, Unprocessed'}</p>
@@ -270,13 +321,81 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="flex gap-4 font-sans mt-auto border-t border-brand-text/10 pt-8">
+          {/* Hair Length Selector */}
+          <div className="mb-6 border-t border-brand-text/10 pt-6 font-sans">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs uppercase tracking-widest font-semibold text-brand-text">
+                Select Length
+              </span>
+              <span className="text-xs text-brand-accent font-medium">
+                {activeLengthObj.label}
+              </span>
+            </div>
+            <div className="grid grid-cols-4 gap-2.5">
+              {HAIR_LENGTHS.map((item) => {
+                const isSelected = selectedLength === item.length;
+                return (
+                  <button
+                    key={item.length}
+                    type="button"
+                    onClick={() => setSelectedLength(item.length)}
+                    className={`py-3 px-2 rounded-xl text-xs font-medium transition-all text-center border cursor-pointer ${
+                      isSelected
+                        ? 'border-brand-accent bg-brand-accent/10 text-brand-accent ring-2 ring-brand-accent/20 font-semibold shadow-sm'
+                        : 'border-brand-text/10 hover:border-brand-text/30 bg-brand-panel text-brand-text'
+                    }`}
+                  >
+                    <div className="text-sm font-semibold">{item.length}</div>
+                    <div className="text-[10px] text-brand-muted mt-0.5">
+                      {item.priceDelta === 0 ? 'Standard' : `+₵${item.priceDelta}`}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Density Selector */}
+          <div className="mb-8 font-sans">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-xs uppercase tracking-widest font-semibold text-brand-text">
+                Hair Density
+              </span>
+              <span className="text-xs text-brand-accent font-medium">
+                {activeDensityObj.density}
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {HAIR_DENSITIES.map((item) => {
+                const isSelected = selectedDensity === item.density;
+                return (
+                  <button
+                    key={item.density}
+                    type="button"
+                    onClick={() => setSelectedDensity(item.density)}
+                    className={`py-3 px-3 rounded-xl text-xs font-medium transition-all text-center border cursor-pointer ${
+                      isSelected
+                        ? 'border-brand-accent bg-brand-accent/10 text-brand-accent ring-2 ring-brand-accent/20 font-semibold shadow-sm'
+                        : 'border-brand-text/10 hover:border-brand-text/30 bg-brand-panel text-brand-text'
+                    }`}
+                  >
+                    <div className="font-semibold">{item.label}</div>
+                    <div className="text-[10px] text-brand-muted mt-0.5">
+                      {item.priceDelta === 0 ? 'Included' : `+₵${item.priceDelta}`}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div ref={buyButtonRef} className="flex gap-4 font-sans mt-auto border-t border-brand-text/10 pt-8">
             <MagneticButton className="flex-1 w-full block">
               <button
                 onClick={handleAddToCart}
-                className="w-full btn-gold py-5 shadow-soft border-none hover:cursor-pointer"
+                className="w-full btn-gold py-5 shadow-soft border-none hover:cursor-pointer text-xs uppercase tracking-widest font-semibold"
               >
-                Add To Bag — ₵{product.price.toFixed(2)}
+                Add To Bag — ₵{currentPrice.toFixed(2)}
               </button>
             </MagneticButton>
           </div>
@@ -285,6 +404,44 @@ export default function ProductDetailPage() {
 
       {/* Customer Reviews Section */}
       <ProductReviews productId={product._id} />
+
+      {/* Sticky Mobile Add To Bag Bar */}
+      <AnimatePresence>
+        {showStickyBar && product && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className="fixed bottom-0 left-0 right-0 z-[75] md:hidden bg-brand-panel/95 backdrop-blur-lg border-t border-brand-text/10 px-4 py-3 shadow-2xl safe-area-bottom flex items-center justify-between gap-3"
+          >
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-11 h-11 rounded-lg overflow-hidden bg-brand-bg flex-shrink-0 border border-brand-text/10">
+                {product.images?.[0] ? (
+                  <img src={getOptimizedImageUrl(product.images[0], 128)} alt={product.name} className="w-full h-full object-cover" />
+                ) : null}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-brand-text truncate">{product.name}</p>
+                <div className="flex items-center gap-1 text-[11px] text-brand-muted">
+                  <span>{selectedLength}</span>
+                  <span>•</span>
+                  <span>{selectedDensity}</span>
+                  <span>•</span>
+                  <span className="text-brand-accent font-semibold">₵{currentPrice.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={handleAddToCart}
+              className="btn-gold py-2.5 px-5 rounded-full text-[11px] font-sans font-semibold tracking-wider whitespace-nowrap shadow-md flex-shrink-0"
+            >
+              Add To Bag
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

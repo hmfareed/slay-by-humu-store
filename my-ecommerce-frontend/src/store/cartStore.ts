@@ -5,23 +5,31 @@ import { API_URL } from '@/src/lib/api';
 
 const API_BAR_URL = API_URL;
 
-interface CartItem {
-  product: {
-    _id: string;
-    name: string;
-    price: number;
-    images: string[];
-    category?: string | { name: string; _id: string };
-    description?: string;
-  };
+export interface CartProduct {
+  _id: string;
+  name: string;
+  price: number;
+  images: string[];
+  category?: string | { name: string; _id: string };
+  description?: string;
+  selectedLength?: string;
+  selectedDensity?: string;
+  itemKey?: string;
+}
+
+export interface CartItem {
+  product: CartProduct;
   quantity: number;
 }
 
+const getItemKey = (p: CartProduct) =>
+  p.itemKey || (p.selectedLength ? `${p._id}-${p.selectedLength}-${p.selectedDensity || ''}` : p._id);
+
 interface CartStore {
   items: CartItem[];
-  addItem: (product: { _id: string; name: string; price: number; images: string[]; category?: string | { name: string; _id: string }; description?: string; quantity?: number }) => Promise<void>;
-  removeItem: (productId: string) => Promise<void>;
-  updateQuantity: (productId: string, quantity: number) => Promise<void>;
+  addItem: (product: CartProduct & { quantity?: number }) => Promise<void>;
+  removeItem: (itemKeyOrId: string) => Promise<void>;
+  updateQuantity: (itemKeyOrId: string, quantity: number) => Promise<void>;
   clearCart: () => void;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -35,16 +43,18 @@ export const useCartStore = create<CartStore>((set, get) => ({
 
   addItem: async (product) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const itemKey = getItemKey(product);
+    const productWithKey: CartProduct = { ...product, itemKey };
     
     // Optimistic UI update
     set((state) => {
-      const existing = state.items.findIndex(item => item.product._id === product._id);
+      const existing = state.items.findIndex(item => getItemKey(item.product) === itemKey);
       if (existing !== -1) {
         const updated = [...state.items];
-        updated[existing].quantity += 1;
+        updated[existing].quantity += (product.quantity || 1);
         return { items: updated };
       } else {
-        return { items: [...state.items, { product, quantity: 1 }] };
+        return { items: [...state.items, { product: productWithKey, quantity: product.quantity || 1 }] };
       }
     });
 
@@ -53,7 +63,9 @@ export const useCartStore = create<CartStore>((set, get) => ({
       try {
         await axios.post(`${API_BAR_URL}/cart`, {
           productId: product._id,
-          quantity: 1
+          quantity: product.quantity || 1,
+          selectedLength: product.selectedLength,
+          selectedDensity: product.selectedDensity,
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -63,18 +75,24 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  removeItem: async (productId) => {
+  removeItem: async (itemKeyOrId: string) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
+    let targetProductId = itemKeyOrId;
+    const itemToRemove = get().items.find(item => getItemKey(item.product) === itemKeyOrId || item.product._id === itemKeyOrId);
+    if (itemToRemove) {
+      targetProductId = itemToRemove.product._id;
+    }
 
     // Optimistic UI update
     set((state) => ({
-      items: state.items.filter(item => item.product._id !== productId)
+      items: state.items.filter(item => getItemKey(item.product) !== itemKeyOrId && item.product._id !== itemKeyOrId)
     }));
 
     // Sync with backend if logged in
     if (token) {
       try {
-        await axios.delete(`${API_BAR_URL}/cart/${productId}`, {
+        await axios.delete(`${API_BAR_URL}/cart/${targetProductId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (error) {
@@ -83,18 +101,20 @@ export const useCartStore = create<CartStore>((set, get) => ({
     }
   },
 
-  updateQuantity: async (productId, quantity) => {
+  updateQuantity: async (itemKeyOrId: string, quantity: number) => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
     if (quantity <= 0) {
-      await get().removeItem(productId);
+      await get().removeItem(itemKeyOrId);
       return;
     }
 
+    let targetProductId = itemKeyOrId;
     // Optimistic UI update
     set((state) => {
-      const existing = state.items.findIndex(item => item.product._id === productId);
+      const existing = state.items.findIndex(item => getItemKey(item.product) === itemKeyOrId || item.product._id === itemKeyOrId);
       if (existing !== -1) {
+        targetProductId = state.items[existing].product._id;
         const updated = [...state.items];
         updated[existing].quantity = quantity;
         return { items: updated };
@@ -105,7 +125,7 @@ export const useCartStore = create<CartStore>((set, get) => ({
     // Sync with backend if logged in
     if (token) {
       try {
-        await axios.put(`${API_BAR_URL}/cart/${productId}`, {
+        await axios.put(`${API_BAR_URL}/cart/${targetProductId}`, {
           quantity
         }, {
           headers: { Authorization: `Bearer ${token}` }

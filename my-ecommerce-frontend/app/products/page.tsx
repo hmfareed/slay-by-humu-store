@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ShoppingBag, User, Menu, Filter, X } from 'lucide-react';
+import { ShoppingBag, User, Menu, Filter, X, Plus } from 'lucide-react';
 import QuickViewModal from '@/components/QuickViewModal';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
@@ -246,7 +246,8 @@ function ProductsContent() {
                         />
                       )}
 
-                      <div className="absolute bottom-6 left-0 right-0 z-20 flex justify-center gap-3 opacity-100 md:opacity-0 translate-y-0 md:translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-[400ms] px-4">
+                      {/* Desktop Hover Interaction Overlay (Keeps mobile photo 100% clean) */}
+                      <div className="hidden md:flex absolute bottom-6 left-0 right-0 z-20 justify-center gap-3 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-[400ms] px-4">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
@@ -259,6 +260,7 @@ function ProductsContent() {
                         <button
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 });
                             window.dispatchEvent(new Event('open-mini-cart'));
                           }}
@@ -269,14 +271,31 @@ function ProductsContent() {
                       </div>
                     </Link>
 
-                    <div className="flex flex-col text-center font-sans tracking-tight">
-                      <span className="text-brand-muted text-[10px] uppercase font-semibold tracking-widest mb-3 block">{product.category}</span>
-                      <h2 className="text-lg md:text-xl font-serif tracking-tight text-brand-text mb-2 group-hover:text-brand-accent transition-colors truncate">
-                        {product.name}
-                      </h2>
-                      <span className="text-brand-text font-medium tracking-tight">
-                        ₵{product.price.toFixed(2)}
-                      </span>
+                    <div className="flex flex-col font-sans tracking-tight px-1">
+                      <span className="text-brand-muted text-[10px] uppercase font-semibold tracking-widest mb-1.5 block">{product.category}</span>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="text-base md:text-lg font-serif tracking-tight text-brand-text mb-1 group-hover:text-brand-accent transition-colors truncate">
+                            {product.name}
+                          </h2>
+                          <span className="text-brand-accent font-semibold tracking-tight text-sm">
+                            ₵{product.price.toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Mobile Quick-Add Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            useCartStore.getState().addItem({ ...product, quantity: 1 });
+                            window.dispatchEvent(new Event('open-mini-cart'));
+                          }}
+                          className="md:hidden flex-shrink-0 w-8 h-8 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                          aria-label={`Add ${product.name} to bag`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

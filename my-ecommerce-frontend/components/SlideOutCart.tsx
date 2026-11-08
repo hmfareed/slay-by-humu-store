@@ -76,54 +76,75 @@ export default function SlideOutCart() {
             </div>
           ) : (
             <div className="space-y-8">
-              {items.map((item) => (
-                <div 
-                  key={item.product._id}
-                  className="flex gap-5 group"
-                >
-                  <div className="w-24 h-32 bg-brand-bg relative overflow-hidden">
-                    {item.product.images?.[0] ? (
-                      <img src={getOptimizedImageUrl(item.product.images[0], 256)} alt={item.product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
-                    ) : null}
-                  </div>
+              {items.map((item) => {
+                const itemKey = item.product.itemKey || item.product._id;
+                return (
+                  <div 
+                    key={itemKey}
+                    className="flex gap-5 group"
+                  >
+                    <div className="w-24 h-32 bg-brand-bg relative overflow-hidden rounded-xl border border-brand-text/5 flex-shrink-0">
+                      {item.product.images?.[0] ? (
+                        <img src={getOptimizedImageUrl(item.product.images[0], 256)} alt={item.product.name} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+                      ) : null}
+                    </div>
 
-                  <div className="flex-1 flex flex-col justify-center">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-sans font-medium text-brand-text tracking-wide whitespace-nowrap overflow-hidden text-ellipsis w-[180px]">{item.product.name}</h3>
-                    </div>
-                    <p className="text-brand-muted text-sm font-sans mb-auto uppercase tracking-widest">{typeof item.product.category === 'object' ? item.product.category.name : item.product.category}</p>
-                    
-                    <div className="flex justify-between items-end mt-4">
-                      <div className="flex items-center gap-3 border border-brand-text/10 rounded-full px-2 py-1">
-                        <button 
-                          onClick={() => updateQuantity(item.product._id, item.quantity - 1)}
-                          className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="text-sm font-sans font-medium text-brand-text w-4 text-center">{item.quantity}</span>
-                        <button 
-                          onClick={() => updateQuantity(item.product._id, item.quantity + 1)}
-                          className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
-                        >
-                          <Plus size={14} />
-                        </button>
+                    <div className="flex-1 flex flex-col justify-center min-w-0">
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-sans font-medium text-brand-text tracking-wide truncate pr-2">{item.product.name}</h3>
                       </div>
-                      <p className="text-lg font-medium text-brand-text tracking-tight">₵{(item.product.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-brand-muted text-xs font-sans uppercase tracking-widest mb-1.5">{typeof item.product.category === 'object' ? item.product.category.name : item.product.category}</p>
+                      
+                      {/* Selected Variants */}
+                      {(item.product.selectedLength || item.product.selectedDensity) && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {item.product.selectedLength && (
+                            <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-brand-accent/15 text-brand-accent font-semibold border border-brand-accent/20">
+                              {item.product.selectedLength}
+                            </span>
+                          )}
+                          {item.product.selectedDensity && (
+                            <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-brand-text/5 text-brand-muted font-medium">
+                              {item.product.selectedDensity}
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex justify-between items-end mt-2">
+                        <div className="flex items-center gap-3 border border-brand-text/10 rounded-full px-2 py-1">
+                          <button 
+                            onClick={() => updateQuantity(itemKey, item.quantity - 1)}
+                            className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
+                            aria-label="Decrease quantity"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="text-sm font-sans font-medium text-brand-text w-4 text-center">{item.quantity}</span>
+                          <button 
+                            onClick={() => updateQuantity(itemKey, item.quantity + 1)}
+                            className="p-1 hover:bg-brand-text/5 rounded-full transition-colors text-brand-muted hover:text-brand-text"
+                            aria-label="Increase quantity"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <p className="text-base font-semibold text-brand-text tracking-tight">₵{(item.product.price * item.quantity).toFixed(2)}</p>
+                      </div>
+                      
+                      <button 
+                        onClick={async () => {
+                          await removeItem(itemKey);
+                          showNotification('Item removed from collection', 'info');
+                        }}
+                        className="text-[11px] text-brand-muted font-sans uppercase tracking-[0.2em] mt-3 hover:text-red-500 transition-colors self-start"
+                      >
+                        Remove
+                      </button>
                     </div>
-                    
-                    <button 
-                      onClick={async () => {
-                        await removeItem(item.product._id);
-                        showNotification('Item removed from collection', 'info');
-                      }}
-                      className="text-xs text-brand-muted font-sans uppercase tracking-[0.2em] mt-3 hover:text-red-500 transition-colors self-start"
-                    >
-                      Remove
-                    </button>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

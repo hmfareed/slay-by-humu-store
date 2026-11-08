@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight, Package, Sparkles, ShieldCheck, Menu } from 'lucide-react';
+import { ShoppingBag, User, Search, ChevronLeft, ChevronRight, ArrowRight, Package, Sparkles, ShieldCheck, Menu, Plus, X } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
 import { useEffect, useState, useCallback } from 'react';
@@ -38,6 +38,9 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [heroIndex, setHeroIndex] = useState(0);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -70,17 +73,34 @@ export default function HomePage() {
     fetchProducts();
   }, [fetchProducts]);
 
-  // Auto-rotate hero every 3 seconds
+  // Auto-rotate hero every 6.5s, pause on hover/touch, smooth progress tracking
   useEffect(() => {
-    if (products.length === 0) return;
+    if (products.length <= 1 || isPaused) return;
+
+    const intervalTime = 6500;
+    const stepTime = 50;
+    const stepIncrement = (stepTime / intervalTime) * 100;
+
     const timer = setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % products.length);
-    }, 3000);
+      setProgress((prev) => {
+        if (prev >= 100) {
+          setHeroIndex((idx) => (idx + 1) % products.length);
+          return 0;
+        }
+        return prev + stepIncrement;
+      });
+    }, stepTime);
+
     return () => clearInterval(timer);
-  }, [products.length]);
+  }, [products.length, isPaused]);
+
+  useEffect(() => {
+    setProgress(0);
+  }, [heroIndex]);
 
   const goToSlide = useCallback((direction: 'prev' | 'next') => {
     if (products.length === 0) return;
+    setProgress(0);
     setHeroIndex((prev) =>
       direction === 'next'
         ? (prev + 1) % products.length
@@ -116,10 +136,10 @@ export default function HomePage() {
   return (
     <div className="relative font-sans bg-brand-bg text-brand-text min-h-screen">
       {/* ─── HEADER: Logo + Icons ─── */}
-      <header className="sticky top-0 z-50 bg-brand-bg border-b border-brand-text/5">
+      <header className="sticky top-0 z-50 bg-brand-bg/95 backdrop-blur-md border-b border-brand-text/5">
         <div className="max-w-7xl mx-auto px-4 md:px-8 lg:px-12">
           {/* Top bar */}
-          <div className="flex items-center justify-between py-5">
+          <div className="flex items-center justify-between py-4 md:py-5 gap-4">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new Event('open-nav-menu'))}
@@ -129,16 +149,30 @@ export default function HomePage() {
               >
                 <Menu className="w-6 h-6" />
               </button>
-              <Link href="/" className="text-3xl md:text-4xl font-serif font-bold tracking-tighter text-brand-accent">
+              <Link href="/" className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold tracking-tighter text-brand-accent whitespace-nowrap">
                 SLAY BY HUMU
               </Link>
             </div>
 
-            <div className="flex items-center gap-6">
-              <Link href="/account" className="hover:text-brand-accent transition-colors">
+            {/* Desktop Center/Right Search */}
+            <div className="hidden lg:block flex-1 max-w-md mx-4 xl:mx-8">
+              <SearchBar onSearch={(q) => (window.location.href = `/products?search=${encodeURIComponent(q)}`)} />
+            </div>
+
+            <div className="flex items-center gap-4 sm:gap-6">
+              {/* Search Toggle for Mobile/Tablet */}
+              <button
+                onClick={() => setShowSearch((prev) => !prev)}
+                className="lg:hidden p-1.5 rounded-full hover:text-brand-accent transition-colors text-brand-text"
+                aria-label={showSearch ? 'Close search' : 'Open search'}
+              >
+                {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
+              </button>
+
+              <Link href="/account" className="hover:text-brand-accent transition-colors text-brand-text" aria-label="Account">
                 <User className="w-5 h-5" />
               </Link>
-              <button onClick={openCart} className="relative hover:text-brand-accent transition-colors">
+              <button onClick={openCart} className="relative hover:text-brand-accent transition-colors text-brand-text" aria-label="Cart">
                 <ShoppingBag className="w-5 h-5" />
                 {mounted && cartItemsCount > 0 && (
                   <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
@@ -149,10 +183,18 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Search Bar directly under logo */}
-          <div className="pb-5">
-            <SearchBar onSearch={(q) => (window.location.href = `/products?search=${encodeURIComponent(q)}`)} />
-          </div>
+          {/* Collapsible Mobile/Tablet Search */}
+          {showSearch && (
+            <div className="lg:hidden pb-4 pt-1 animate-in slide-in-from-top-2 duration-200">
+              <SearchBar
+                autoFocus
+                onSearch={(q) => {
+                  setShowSearch(false);
+                  window.location.href = `/products?search=${encodeURIComponent(q)}`;
+                }}
+              />
+            </div>
+          )}
         </div>
       </header>
 
@@ -176,9 +218,16 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ─── HERO SLIDESHOW: Auto-rotating product images every 3s ─── */}
+      {/* ─── HERO SLIDESHOW: Auto-rotating product images every 6.5s ─── */}
       {currentHeroProduct ? (
-        <section className="relative w-full overflow-hidden bg-brand-panel" style={{ height: 'clamp(300px, 60vh, 600px)' }}>
+        <section 
+          className="relative w-full overflow-hidden bg-brand-panel" 
+          style={{ height: 'clamp(340px, 62vh, 620px)' }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onTouchStart={() => setIsPaused(true)}
+          onTouchEnd={() => setIsPaused(false)}
+        >
           <div key={currentHeroProduct._id} className="absolute inset-0">
             <img
               src={getOptimizedImageUrl(currentHeroProduct.images[0], 1200)}
@@ -187,7 +236,7 @@ export default function HomePage() {
               loading="eager"
             />
             {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
             {/* Hero text overlay */}
             <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12 lg:p-16">
@@ -219,29 +268,40 @@ export default function HomePage() {
             <>
               <button
                 onClick={() => goToSlide('prev')}
-                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                aria-label="Previous slide"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => goToSlide('next')}
-                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10  border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                aria-label="Next slide"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
 
-              {/* Dot indicators */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+              {/* Dot indicators with animated progress */}
+              <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10">
                 {products.map((_, i) => (
                   <button
                     key={i}
-                    onClick={() => setHeroIndex(i)}
-                    className={`transition-all duration-300 rounded-full ${
-                      i === heroIndex
-                        ? 'w-8 h-2 bg-brand-accent'
-                        : 'w-2 h-2 bg-white/40 hover:bg-white/60'
-                    }`}
-                  />
+                    onClick={() => {
+                      setProgress(0);
+                      setHeroIndex(i);
+                    }}
+                    aria-label={`Go to slide ${i + 1}`}
+                    className="relative h-2 rounded-full overflow-hidden transition-all duration-300"
+                    style={{ width: i === heroIndex ? '32px' : '8px' }}
+                  >
+                    <div className={`w-full h-full ${i === heroIndex ? 'bg-white/30' : 'bg-white/40 hover:bg-white/70'}`} />
+                    {i === heroIndex && (
+                      <div
+                        className="absolute inset-y-0 left-0 bg-brand-accent transition-all ease-linear"
+                        style={{ width: `${progress}%` }}
+                      />
+                    )}
+                  </button>
                 ))}
               </div>
             </>
@@ -336,14 +396,15 @@ export default function HomePage() {
                       />
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
-                      {/* Interaction Buttons Overlay */}
-                      <div className="absolute flex flex-col md:flex-row bottom-3 left-3 right-3 gap-2 opacity-100 md:opacity-0 translate-y-0 md:translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
-                        <span className="flex-1 text-center bg-white/90 dark:bg-brand-panel/90  text-brand-text text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm hover:bg-white transition-colors">
+                      {/* Desktop Hover Interaction Overlay (Keeps mobile photo 100% clean) */}
+                      <div className="hidden md:flex absolute bottom-3 left-3 right-3 gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                        <span className="flex-1 text-center bg-white/90 dark:bg-brand-panel/90 text-brand-text text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm hover:bg-white transition-colors">
                           View
                         </span>
                         <button
                           onClick={(e) => {
                             e.preventDefault();
+                            e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
                             window.dispatchEvent(new Event('open-mini-cart'));
                           }}
@@ -354,13 +415,30 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="text-center font-sans px-1">
-                      <h3 className="font-medium text-sm md:text-base tracking-tight text-brand-text group-hover:text-brand-accent transition-colors mb-1.5 truncate">
-                        {product.name}
-                      </h3>
-                      <p className="text-brand-accent font-semibold text-sm">
-                        ₵{product.price.toFixed(2)}
-                      </p>
+                    <div className="font-sans px-1">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm md:text-base tracking-tight text-brand-text group-hover:text-brand-accent transition-colors mb-1 truncate">
+                            {product.name}
+                          </h3>
+                          <p className="text-brand-accent font-semibold text-sm">
+                            ₵{product.price.toFixed(2)}
+                          </p>
+                        </div>
+                        {/* Mobile Quick-Add Button */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
+                            window.dispatchEvent(new Event('open-mini-cart'));
+                          }}
+                          className="md:hidden flex-shrink-0 w-8 h-8 mt-0.5 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                          aria-label={`Add ${product.name} to bag`}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </Link>
                 </div>

@@ -9,9 +9,11 @@ import { getOptimizedImageUrl } from '@/src/lib/images';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;
+  className?: string;
+  autoFocus?: boolean;
 }
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
+export default function SearchBar({ onSearch, className, autoFocus }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -71,20 +73,21 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   };
 
   return (
-    <div className="relative w-full max-w-sm hidden md:block" ref={containerRef}>
+    <div className={`relative w-full ${className || ''}`} ref={containerRef}>
       <div className="relative group">
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder="Search collections & raw hair..."
           value={query}
+          autoFocus={autoFocus}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => { if (query) setIsOpen(true); }}
           onKeyDown={handleKeyDown}
-          className="w-full bg-brand-text/5 border border-brand-text/10 rounded-full pl-12 pr-4 py-2.5 text-sm focus:outline-none focus:border-brand-accent focus:bg-transparent transition-all placeholder-brand-muted"
+          className="w-full bg-brand-text/5 border border-brand-text/10 rounded-full pl-11 pr-4 py-2 text-sm focus:outline-none focus:border-brand-accent focus:bg-transparent transition-all placeholder-brand-muted text-brand-text"
         />
-        <Search className="w-4 h-4 text-brand-muted absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-brand-accent transition-colors" />
+        <Search className="w-4 h-4 text-brand-muted absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-brand-accent transition-colors" />
         {loading && (
-          <Loader2 className="w-4 h-4 text-brand-accent absolute right-4 top-1/2 -translate-y-1/2 animate-spin" />
+          <Loader2 className="w-4 h-4 text-brand-accent absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin" />
         )}
       </div>
 
