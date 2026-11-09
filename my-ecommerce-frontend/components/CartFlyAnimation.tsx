@@ -179,13 +179,13 @@ export default function CartFlyAnimation() {
                 duration: 1.0,
                 x: {
                   duration: 1.0,
-                  ease: [0.3, 0, 0.2, 1],
+                  ease: isFlyingUp ? [0.3, 0, 0.2, 1] : [0.15, 0.85, 0.35, 1],
                 },
                 y: {
                   duration: 1.0,
                   ease: isFlyingUp
-                    ? [0.08, 0.82, 0.17, 1] // Fluid high-arc lift-off and smooth cushion into the bag
-                    : [0.25, 0.1, 0.25, 1],
+                    ? [0.08, 0.82, 0.17, 1] // Fluid high-arc lift-off and smooth cushion into header
+                    : [0.45, 0, 0.85, 0.35], // Smooth drift across then swoops down into bottom nav
                 },
                 scale: {
                   duration: 1.0,

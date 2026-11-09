@@ -108,13 +108,13 @@ function ProductsContent() {
           </div>
           
           <div className="flex gap-6 items-center">
-            <Link href="/login" className="hover:text-brand-accent transition-colors">
+            <Link href="/login" className="hidden md:flex hover:text-brand-accent transition-colors items-center">
               <User className="w-6 h-6" />
             </Link>
             <button
               onClick={openCart}
               data-cart-target="true"
-              className={`hover:text-brand-accent transition-colors relative flex items-center ${
+              className={`hidden md:flex hover:text-brand-accent transition-colors relative items-center ${
                 isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
               }`}
               aria-label="Cart"

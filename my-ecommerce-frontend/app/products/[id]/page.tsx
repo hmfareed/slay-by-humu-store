@@ -207,13 +207,13 @@ export default function ProductDetailPage() {
           </div>
           
           <div className="flex gap-4 md:gap-6 items-center">
-            <Link href="/login" className="hover:text-brand-accent transition-colors">
+            <Link href="/login" className="hidden md:flex hover:text-brand-accent transition-colors items-center">
               <User className="w-6 h-6" />
             </Link>
             <button
               onClick={() => window.dispatchEvent(new Event('open-mini-cart'))}
               data-cart-target="true"
-              className={`relative hover:text-brand-accent transition-colors flex items-center ${
+              className={`hidden md:flex relative hover:text-brand-accent transition-colors items-center ${
                 isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
               }`}
               aria-label="Cart"
@@ -446,7 +446,7 @@ export default function ProductDetailPage() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-[75] md:hidden bg-brand-panel/95 backdrop-blur-lg border-t border-brand-text/10 px-4 py-3 shadow-2xl safe-area-bottom flex items-center justify-between gap-3"
+            className="fixed bottom-16 left-0 right-0 z-[75] md:hidden bg-brand-panel/95 backdrop-blur-lg border-t border-brand-text/10 px-4 py-3 shadow-2xl safe-area-bottom flex items-center justify-between gap-3"
           >
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <div className="w-11 h-11 rounded-lg overflow-hidden bg-brand-bg flex-shrink-0 border border-brand-text/10">

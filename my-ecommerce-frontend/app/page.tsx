@@ -171,13 +171,13 @@ export default function HomePage() {
                 {showSearch ? <X className="w-5 h-5" /> : <Search className="w-5 h-5" />}
               </button>
 
-              <Link href="/account" className="hover:text-brand-accent transition-colors text-brand-text" aria-label="Account">
+              <Link href="/account" className="hidden md:flex hover:text-brand-accent transition-colors text-brand-text items-center" aria-label="Account">
                 <User className="w-5 h-5" />
               </Link>
               <button
                 onClick={openCart}
                 data-cart-target="true"
-                className={`relative hover:text-brand-accent text-brand-text transition-colors ${
+                className={`hidden md:flex relative hover:text-brand-accent text-brand-text transition-colors items-center ${
                   isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
                 }`}
                 aria-label="Cart"
