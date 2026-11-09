@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Check } from 'lucide-react';
+import { X, ShoppingBag, Check, Ban } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { getOptimizedImageUrl } from '@/src/lib/images';
 import { triggerFlyToCart } from '@/components/CartFlyAnimation';
@@ -14,6 +14,8 @@ interface Product {
   price: number;
   category: string | { name: string; _id: string };
   images: string[];
+  stock?: number;
+  isSoldOut?: boolean;
 }
 
 interface QuickViewModalProps {
@@ -29,7 +31,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
   if (!product) return null;
 
+  const isSoldOut = Boolean(product.isSoldOut || (product.stock !== undefined && product.stock <= 0));
+
   const handleAddToCart = (e?: React.MouseEvent) => {
+    if (isSoldOut) return;
     // Capture click position
     const clickPos = e ? { x: e.clientX, y: e.clientY } : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const imgUrl = product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined;
@@ -88,6 +93,13 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-brand-muted">No Image</div>
               )}
+              {isSoldOut && (
+                <div className="absolute top-4 left-4 z-10 pointer-events-none">
+                  <span className="bg-black/85 text-white border border-white/20 text-[10px] font-sans font-semibold uppercase tracking-[0.2em] px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md">
+                    Sold Out
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Product Details */}
@@ -106,24 +118,33 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
               </div>
 
               <div className="mt-auto pt-8 border-t border-brand-text/5">
-                <button
-                  onClick={(e) => handleAddToCart(e)}
-                  disabled={adding || added}
-                  className="w-full btn-gold py-5 text-lg font-sans font-medium flex items-center justify-center gap-3 relative overflow-hidden group disabled:opacity-80 disabled:cursor-not-allowed"
-                >
-                  {adding ? (
-                    <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : added ? (
-                    <>
-                      <Check className="w-5 h-5" /> Added to Cart
-                    </>
-                  ) : (
-                    <>
-                      <ShoppingBag className="w-5 h-5" /> Add to Cart
-                    </>
-                  )}
-                  <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
-                </button>
+                {isSoldOut ? (
+                  <button
+                    disabled
+                    className="w-full py-5 rounded-2xl bg-zinc-800/80 text-zinc-400 border border-white/5 text-base font-sans font-medium flex items-center justify-center gap-2 cursor-not-allowed shadow-none"
+                  >
+                    <Ban className="w-5 h-5 text-zinc-500" /> Sold Out
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => handleAddToCart(e)}
+                    disabled={adding || added}
+                    className="w-full btn-gold py-5 text-lg font-sans font-medium flex items-center justify-center gap-3 relative overflow-hidden group disabled:opacity-80 disabled:cursor-not-allowed"
+                  >
+                    {adding ? (
+                      <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : added ? (
+                      <>
+                        <Check className="w-5 h-5" /> Added to Cart
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingBag className="w-5 h-5" /> Add to Cart
+                      </>
+                    )}
+                    <div className="absolute inset-0 bg-white/20 transform -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out" />
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

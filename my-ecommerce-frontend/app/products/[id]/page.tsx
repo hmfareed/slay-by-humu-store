@@ -24,11 +24,13 @@ interface Product {
   price: number;
   category: string | { name: string; _id: string };
   images: string[];
+  stock?: number;
   texture?: string;
   lace?: string;
   longevity?: string;
   styling?: string;
   badge?: string;
+  isSoldOut?: boolean;
 }
 
 const HAIR_LENGTHS = [
@@ -71,6 +73,7 @@ export default function ProductDetailPage() {
   const activeLengthObj = HAIR_LENGTHS.find((l) => l.length === selectedLength) || HAIR_LENGTHS[0];
   const activeDensityObj = HAIR_DENSITIES.find((d) => d.density === selectedDensity) || HAIR_DENSITIES[0];
   const currentPrice = (product?.price || 0) + activeLengthObj.priceDelta + activeDensityObj.priceDelta;
+  const isSoldOut = Boolean(product?.isSoldOut || (product?.stock !== undefined && product.stock <= 0));
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -153,7 +156,7 @@ export default function ProductDetailPage() {
   }
 
   const handleAddToCart = async (e?: React.MouseEvent) => {
-    if (!product) return;
+    if (!product || isSoldOut) return;
     const imgUrl = product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined;
     if (e) {
       triggerFlyToCart(e, imgUrl);
@@ -274,10 +277,15 @@ export default function ProductDetailPage() {
                 </div>
               )}
             </AnimatePresence>
-            <div className="absolute top-6 left-6 flex gap-2">
+            <div className="absolute top-6 left-6 flex flex-wrap gap-2 z-10">
               <span className="bg-brand-panel/80  px-4 py-1.5 rounded-full text-xs font-sans font-semibold uppercase tracking-widest border border-brand-text/10 shadow-soft">
                 {product.badge || '100% Raw Hair'}
               </span>
+              {isSoldOut && (
+                <span className="bg-black/90 text-white border border-white/20 px-4 py-1.5 rounded-full text-xs font-sans font-bold uppercase tracking-widest shadow-soft backdrop-blur-md">
+                  Sold Out
+                </span>
+              )}
             </div>
             {/* Instruction tooltip */}
             <div className="absolute bottom-6 right-6 flex items-center gap-2 bg-brand-panel/80  px-4 py-2 rounded-full border border-brand-text/10 pointer-events-none shadow-soft">
@@ -321,8 +329,13 @@ export default function ProductDetailPage() {
             {product.name}
           </h1>
           
-          <div className="text-3xl font-sans font-light tracking-tight mb-8 flex items-baseline gap-3">
+          <div className="text-3xl font-sans font-light tracking-tight mb-8 flex flex-wrap items-baseline gap-3">
             <span className="text-brand-text font-medium">₵{currentPrice.toFixed(2)}</span>
+            {isSoldOut && (
+              <span className="text-xs font-sans font-bold uppercase tracking-widest text-rose-500 bg-rose-500/10 px-3 py-1 rounded-full border border-rose-500/20">
+                Currently Unavailable
+              </span>
+            )}
             {(activeLengthObj.priceDelta > 0 || activeDensityObj.priceDelta > 0) && (
               <span className="text-xs text-brand-muted uppercase tracking-wider font-sans">
                 (includes length & density selections)
@@ -423,14 +436,23 @@ export default function ProductDetailPage() {
           </div>
 
           <div ref={buyButtonRef} className="flex gap-4 font-sans mt-auto border-t border-brand-text/10 pt-8">
-            <MagneticButton className="flex-1 w-full block">
+            {isSoldOut ? (
               <button
-                onClick={(e) => handleAddToCart(e)}
-                className="w-full btn-gold py-5 shadow-soft border-none hover:cursor-pointer text-xs uppercase tracking-widest font-semibold"
+                disabled
+                className="w-full py-5 rounded-2xl bg-zinc-800/80 text-zinc-400 border border-white/5 text-xs uppercase tracking-widest font-semibold cursor-not-allowed shadow-none"
               >
-                Add To Bag — ₵{currentPrice.toFixed(2)}
+                Sold Out — Currently Unavailable
               </button>
-            </MagneticButton>
+            ) : (
+              <MagneticButton className="flex-1 w-full block">
+                <button
+                  onClick={(e) => handleAddToCart(e)}
+                  className="w-full btn-gold py-5 shadow-soft border-none hover:cursor-pointer text-xs uppercase tracking-widest font-semibold"
+                >
+                  Add To Bag — ₵{currentPrice.toFixed(2)}
+                </button>
+              </MagneticButton>
+            )}
           </div>
         </motion.div>
       </div>
@@ -466,12 +488,21 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            <button
-              onClick={(e) => handleAddToCart(e)}
-              className="btn-gold py-2.5 px-5 rounded-full text-[11px] font-sans font-semibold tracking-wider whitespace-nowrap shadow-md flex-shrink-0"
-            >
-              Add To Bag
-            </button>
+            {isSoldOut ? (
+              <button
+                disabled
+                className="py-2.5 px-5 rounded-full text-[11px] font-sans font-semibold tracking-wider whitespace-nowrap bg-zinc-800 text-zinc-400 border border-white/5 cursor-not-allowed flex-shrink-0"
+              >
+                Sold Out
+              </button>
+            ) : (
+              <button
+                onClick={(e) => handleAddToCart(e)}
+                className="btn-gold py-2.5 px-5 rounded-full text-[11px] font-sans font-semibold tracking-wider whitespace-nowrap shadow-md flex-shrink-0"
+              >
+                Add To Bag
+              </button>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

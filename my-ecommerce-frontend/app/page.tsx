@@ -21,6 +21,8 @@ interface Product {
   price: number;
   category: string | { name: string; _id: string };
   images: string[];
+  stock?: number;
+  isSoldOut?: boolean;
 }
 
 // Hair categories with icons/descriptions
@@ -394,7 +396,9 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-              {catProducts.map((product) => (
+              {catProducts.map((product) => {
+                const isSoldOut = Boolean(product.isSoldOut || (product.stock !== undefined && product.stock <= 0));
+                return (
                 <div key={product._id}>
                   <Link
                     href={`/products/${product._id}`}
@@ -409,22 +413,38 @@ export default function HomePage() {
                       />
                       {/* Hover overlay */}
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
+                      
+                      {/* Luxury Sold Out Floating Badge */}
+                      {isSoldOut && (
+                        <div className="absolute top-3 left-3 z-20 pointer-events-none">
+                          <span className="bg-black/85 text-white border border-white/20 text-[9px] font-sans font-semibold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full shadow-lg backdrop-blur-md">
+                            Sold Out
+                          </span>
+                        </div>
+                      )}
+
                       {/* Desktop Hover Interaction Overlay (Keeps mobile photo 100% clean) */}
                       <div className="hidden md:flex absolute bottom-3 left-3 right-3 gap-2 opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                         <span className="flex-1 text-center bg-white/90 dark:bg-brand-panel/90 text-brand-text text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm hover:bg-white transition-colors">
                           View
                         </span>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
-                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
-                          }}
-                          className="flex-1 text-center bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-md hover:bg-amber-600 transition-colors"
-                        >
-                          Add To Bag
-                        </button>
+                        {isSoldOut ? (
+                          <span className="flex-1 text-center bg-zinc-800/90 text-zinc-400 text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-sm border border-white/5">
+                            Sold Out
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
+                              triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+                            }}
+                            className="flex-1 text-center bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-md hover:bg-amber-600 transition-colors"
+                          >
+                            Add To Bag
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -438,24 +458,31 @@ export default function HomePage() {
                             ₵{product.price.toFixed(2)}
                           </p>
                         </div>
-                        {/* Mobile Quick-Add Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
-                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
-                          }}
-                          className="md:hidden flex-shrink-0 w-8 h-8 mt-0.5 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
-                          aria-label={`Add ${product.name} to bag`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                        {/* Mobile Quick-Add Button / Sold Out Indicator */}
+                        {isSoldOut ? (
+                          <span className="md:hidden flex-shrink-0 text-[9px] font-sans uppercase font-bold tracking-wider text-rose-500/90 bg-rose-500/10 px-2 py-0.5 rounded-full border border-rose-500/20">
+                            Sold Out
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
+                              triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+                            }}
+                            className="md:hidden flex-shrink-0 w-8 h-8 mt-0.5 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                            aria-label={`Add ${product.name} to bag`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </Link>
                 </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Mobile: View All link */}

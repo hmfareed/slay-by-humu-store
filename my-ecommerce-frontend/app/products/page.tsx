@@ -21,6 +21,7 @@ interface Product {
   category: string;
   stock: number;
   images: string[];
+  isSoldOut?: boolean;
 }
 
 function ProductsContent() {
@@ -239,7 +240,9 @@ function ProductsContent() {
               </div>
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
-                {products.map((product, index) => (
+                {products.map((product, index) => {
+                  const isSoldOut = Boolean(product.isSoldOut || (product.stock !== undefined && product.stock <= 0));
+                  return (
                   <div 
                     key={product._id}
                     className="group cursor-pointer flex flex-col"
@@ -259,6 +262,15 @@ function ProductsContent() {
                         />
                       )}
 
+                      {/* Luxury Sold Out Floating Badge */}
+                      {isSoldOut && (
+                        <div className="absolute top-4 left-4 z-20 pointer-events-none">
+                          <span className="bg-black/85 text-white border border-white/20 text-[10px] font-sans font-semibold uppercase tracking-[0.2em] px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md">
+                            Sold Out
+                          </span>
+                        </div>
+                      )}
+
                       {/* Desktop Hover Interaction Overlay (Keeps mobile photo 100% clean) */}
                       <div className="hidden md:flex absolute bottom-6 left-0 right-0 z-20 justify-center gap-3 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-[400ms] px-4">
                         <button
@@ -270,17 +282,26 @@ function ProductsContent() {
                         >
                           Quick View
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            useCartStore.getState().addItem({ ...product, quantity: 1 });
-                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
-                          }}
-                          className="flex-1 text-center bg-brand-accent text-white px-0 py-3 rounded-2xl text-xs font-sans font-semibold tracking-widest uppercase shadow-md hover:bg-amber-600 transition-colors"
-                        >
-                          Add to Bag
-                        </button>
+                        {isSoldOut ? (
+                          <button
+                            disabled
+                            className="flex-1 text-center bg-zinc-800/90 text-zinc-400 px-0 py-3 rounded-2xl text-xs font-sans font-medium tracking-widest uppercase shadow-none cursor-not-allowed border border-white/5"
+                          >
+                            Sold Out
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              useCartStore.getState().addItem({ ...product, quantity: 1 });
+                              triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+                            }}
+                            className="flex-1 text-center bg-brand-accent text-white px-0 py-3 rounded-2xl text-xs font-sans font-semibold tracking-widest uppercase shadow-md hover:bg-amber-600 transition-colors"
+                          >
+                            Add to Bag
+                          </button>
+                        )}
                       </div>
                     </Link>
 
@@ -295,23 +316,30 @@ function ProductsContent() {
                             ₵{product.price.toFixed(2)}
                           </span>
                         </div>
-                        {/* Mobile Quick-Add Button */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            useCartStore.getState().addItem({ ...product, quantity: 1 });
-                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
-                          }}
-                          className="md:hidden flex-shrink-0 w-8 h-8 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
-                          aria-label={`Add ${product.name} to bag`}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
+                        {/* Mobile Quick-Add Button / Sold Out Indicator */}
+                        {isSoldOut ? (
+                          <span className="md:hidden flex-shrink-0 text-[10px] font-sans uppercase font-bold tracking-wider text-rose-500/90 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+                            Sold Out
+                          </span>
+                        ) : (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              useCartStore.getState().addItem({ ...product, quantity: 1 });
+                              triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+                            }}
+                            className="md:hidden flex-shrink-0 w-8 h-8 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
+                            aria-label={`Add ${product.name} to bag`}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
