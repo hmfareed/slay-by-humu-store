@@ -4,6 +4,7 @@ const {
   getProducts,
   getProductById,
   updateProduct,
+  toggleSoldOut,
   deleteProduct
 } = require('../controllers/productController');
 const multer = require('multer');
@@ -17,9 +18,10 @@ const router = express.Router();
 router.get('/', getProducts);
 router.get('/:id', getProductById);
 
-// Admin only - create product with images
+// Admin only - create product with images & management
 router.post('/', protect, isAdmin, upload.array('images', 5), createProduct);
 router.put('/:id', protect, isAdmin, upload.array('images', 5), updateProduct);
+router.patch('/:id/toggle-sold-out', protect, isAdmin, toggleSoldOut);
 router.delete('/:id', protect, isAdmin, deleteProduct);
 
 module.exports = router;

@@ -48,6 +48,10 @@ const productSchema = new mongoose.Schema({
     type: Boolean, 
     default: false 
   },
+  isSoldOut: {
+    type: Boolean,
+    default: false
+  },
   averageRating: {
     type: Number,
     default: 0

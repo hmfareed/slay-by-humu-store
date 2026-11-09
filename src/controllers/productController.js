@@ -16,8 +16,13 @@ const createProduct = async (req, res) => {
       }
     }
 
+    const productData = { ...req.body };
+    if (productData.isSoldOut !== undefined) {
+      productData.isSoldOut = productData.isSoldOut === true || productData.isSoldOut === 'true';
+    }
+
     const product = await Product.create({
-      ...req.body,
+      ...productData,
       images: imageUrls
     });
 
@@ -78,7 +83,12 @@ const getProductById = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
+    
+    if (updates.isSoldOut !== undefined) {
+      updates.isSoldOut = updates.isSoldOut === true || updates.isSoldOut === 'true';
+    }
+
     // Handle image uploads if any
     if (req.files && req.files.length > 0) {
       let imageUrls = [];
@@ -90,6 +100,22 @@ const updateProduct = async (req, res) => {
     }
     const product = await Product.findByIdAndUpdate(id, updates, { new: true });
     if (!product) return res.status(404).json({ message: 'Product not found' });
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Toggle Sold Out status
+const toggleSoldOut = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    
+    product.isSoldOut = !product.isSoldOut;
+    await product.save();
+    
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -108,4 +134,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = { createProduct, getProducts, getProductById, updateProduct, deleteProduct };
+module.exports = { createProduct, getProducts, getProductById, updateProduct, toggleSoldOut, deleteProduct };
