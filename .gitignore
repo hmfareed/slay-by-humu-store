@@ -8,3 +8,5 @@ my-ecommerce-frontend/.env.local
 .vercel
 .env*.local
 .env*
+!.env.example
+my-ecommerce-frontend/package-lock.json

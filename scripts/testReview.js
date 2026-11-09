@@ -1,8 +1,15 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoose = require('mongoose');
-const Review = require('./src/models/Review');
-const Product = require('./src/models/Product');
-const User = require('./src/models/User');
+const Review = require('../src/models/Review');
+const Product = require('../src/models/Product');
+const User = require('../src/models/User');
+
+// Environment safeguard
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_TEST_MUTATIONS !== 'true') {
+  console.error('⛔ Refusing to run testReview in production without ALLOW_TEST_MUTATIONS=true');
+  process.exit(1);
+}
 
 const testReview = async () => {
   try {
@@ -27,8 +34,8 @@ const testReview = async () => {
     // Check if user already reviewed this product
     const alreadyReviewed = await Review.findOne({ product: product._id, user: user._id });
     if (alreadyReviewed) {
-        console.log('Already reviewed, deleting...');
-        await Review.deleteOne({ _id: alreadyReviewed._id });
+      console.log('Already reviewed, deleting...');
+      await Review.deleteOne({ _id: alreadyReviewed._id });
     }
 
     const review = await Review.create({
@@ -44,7 +51,7 @@ const testReview = async () => {
   } catch (error) {
     console.error('Error creating review:', error);
   } finally {
-    mongoose.disconnect();
+    await mongoose.disconnect();
   }
 };
 

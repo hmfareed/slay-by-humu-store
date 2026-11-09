@@ -63,7 +63,7 @@ export default function HomePage() {
         throw new Error(`Server returned status ${res.status}`);
       }
     } catch (err: any) {
-      console.error('Failed to fetch products:', err);
+      console.warn('Backend connection notice:', err?.message || err);
       setError(err?.message || 'Failed to connect to backend server');
     } finally {
       setLoading(false);

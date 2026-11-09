@@ -8,7 +8,7 @@
 1. Create a centralized JWT validation utility (`isTokenValid`, `decodeToken`) in `my-ecommerce-frontend/src/lib/jwt.ts`.
 2. Update `AdminLayout` and `AuthContext` to check token expiration against `Date.now()`.
 3. Harden admin pages (`customers`, `orders`, `dashboard`, `messages`) to check response status and handle 401/403 explicitly with user notification and redirection instead of silently defaulting to empty arrays.
-4. Promote `mohammedfareed.dev@gmail.com` to `admin` role in MongoDB Atlas.
+4. Promote admin user account to `admin` role in MongoDB Atlas.
 
 **Tech Stack:** Next.js (App Router), TypeScript, React Context, Node.js, Mongoose.
 
@@ -79,13 +79,13 @@
 
 ---
 
-### Task 4: Promote `mohammedfareed.dev@gmail.com` to Admin Role
+### Task 4: Promote Admin Account to Admin Role
 
 **Files:**
-- Modify: `makeAdmin.js` to support CLI argument or default to `mohammedfareed.dev@gmail.com`
+- Modify: `scripts/makeAdmin.js` to accept CLI email argument
 
-- [ ] **Step 1: Update `makeAdmin.js` to accept email parameter or promote `mohammedfareed.dev@gmail.com`**
-- [ ] **Step 2: Execute `makeAdmin.js` to ensure the account has `admin` role in MongoDB**
+- [ ] **Step 1: Use `scripts/makeAdmin.js <email>` to promote designated administrator account**
+- [ ] **Step 2: Execute `scripts/makeAdmin.js <email>` to ensure the account has `admin` role in MongoDB**
 - [ ] **Step 3: Verify the account role in database**
 
 ---

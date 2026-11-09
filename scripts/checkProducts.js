@@ -1,7 +1,8 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoose = require('mongoose');
-const Product = require('./src/models/Product');
-const connectDB = require('./src/config/db');
+const Product = require('../src/models/Product');
+const connectDB = require('../src/config/db');
 
 const check = async () => {
   try {
@@ -18,7 +19,7 @@ const check = async () => {
     });
     process.exit(0);
   } catch (err) {
-    console.error(err);
+    console.error('Error checking products:', err);
     process.exit(1);
   }
 };

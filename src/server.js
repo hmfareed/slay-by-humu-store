@@ -53,9 +53,17 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paystackRoutes);
 
 
-// Test route
+// Test & health check routes
 app.get('/', (req, res) => {
   res.send('E-commerce Backend is Running! 🚀');
+});
+
+app.get('/api', (req, res) => {
+  res.json({ status: 'ok', message: 'E-commerce API is running 🚀' });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
 });
 
 const http = require('http');

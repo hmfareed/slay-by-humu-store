@@ -52,8 +52,8 @@ export default function CategoriesPage() {
           );
           setProducts(realProducts);
         }
-      } catch (err) {
-        console.error('Failed to fetch products:', err);
+      } catch (err: any) {
+        console.warn('Backend connection notice:', err?.message || err);
       } finally {
         setLoading(false);
       }

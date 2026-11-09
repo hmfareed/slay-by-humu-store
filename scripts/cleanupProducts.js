@@ -1,7 +1,14 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoose = require('mongoose');
-const Product = require('./src/models/Product');
-const connectDB = require('./src/config/db');
+const Product = require('../src/models/Product');
+const connectDB = require('../src/config/db');
+
+// Environment safeguard
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DESTRUCTIVE_CLEANUP !== 'true') {
+  console.error('⛔ Refusing to run destructive cleanup in production without ALLOW_DESTRUCTIVE_CLEANUP=true');
+  process.exit(1);
+}
 
 // Renames: old name → new name
 const renames = [
@@ -20,7 +27,6 @@ const deleteFilters = [
   { name: "Samsung 26 ultra" },
   { name: "iPhone 15" },
   { category: "Phones" },
-  // Old seed products with no real images
   { name: "Ethereal Blonde Curls" },
   { name: "Crimson Royale" },
   { name: "Midnight Diva Curls" },

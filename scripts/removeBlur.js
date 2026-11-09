@@ -18,7 +18,7 @@ function walk(dir) {
   return results;
 }
 
-const frontendDir = path.join(__dirname, 'my-ecommerce-frontend');
+const frontendDir = path.join(__dirname, '../my-ecommerce-frontend');
 const dirsToScan = [
   path.join(frontendDir, 'app'),
   path.join(frontendDir, 'components')
@@ -35,16 +35,13 @@ let updatedFiles = 0;
 
 files.forEach(file => {
   let content = fs.readFileSync(file, 'utf8');
-  let original = content;
-  content = content.replace(/bg-brand-bg\/(80|90)/g, 'bg-brand-bg');
-  content = content.replace(/bg-white\/80 dark:bg-\[\#0A0A0A\]\/80/g, 'bg-white dark:bg-[#0A0A0A]');
-  content = content.replace(/bg-white\/60 dark:bg-black\/40/g, 'bg-white dark:bg-black');
-  
-  if (content !== original) {
+  const regex = /backdrop-blur(?:-\w+)?/g;
+  if (regex.test(content)) {
+    content = content.replace(regex, '');
     fs.writeFileSync(file, content, 'utf8');
     updatedFiles++;
-    console.log(`Updated: ${file}`);
+    console.log(`Removed blur from: ${file}`);
   }
 });
 
-console.log(`Done! Replaced transparency with solid backgrounds in ${updatedFiles} files.`);
+console.log(`Done! Removed blur from ${updatedFiles} files.`);

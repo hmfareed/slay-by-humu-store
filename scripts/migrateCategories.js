@@ -1,5 +1,12 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const mongoose = require('mongoose');
+
+// Environment safeguard
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_MIGRATIONS !== 'true') {
+  console.error('⛔ Refusing to run migrateCategories in production without ALLOW_PROD_MIGRATIONS=true');
+  process.exit(1);
+}
 
 // Temporary schemas for migration
 const categorySchema = new mongoose.Schema({
@@ -27,9 +34,7 @@ async function migrate() {
       if (product.category instanceof mongoose.Types.ObjectId) {
         const category = await Category.findById(product.category);
         if (category) {
-          // If category name doesn't match predefined exactly, map it if possible
           let catName = category.name.trim();
-          // Title case it just in case
           catName = catName.charAt(0).toUpperCase() + catName.slice(1).toLowerCase();
           
           await Product.updateOne(
@@ -47,14 +52,13 @@ async function migrate() {
           updatedCount++;
         }
       } else if (typeof product.category === 'object' && product.category !== null) {
-          // It's populated? Should be raw document, but just in case
-          if (product.category.name) {
-             await Product.updateOne(
-               { _id: product._id },
-               { $set: { category: product.category.name } }
-             );
-             updatedCount++;
-          }
+        if (product.category.name) {
+          await Product.updateOne(
+            { _id: product._id },
+            { $set: { category: product.category.name } }
+          );
+          updatedCount++;
+        }
       }
     }
 
