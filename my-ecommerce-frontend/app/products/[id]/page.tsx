@@ -15,6 +15,7 @@ import ProductReviews from '@/components/ProductReviews';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { useCartBump } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -59,6 +60,13 @@ export default function ProductDetailPage() {
   const buyButtonRef = useRef<HTMLDivElement>(null);
   
   const addToCart = useCartStore((state) => state.addItem);
+  const cartCount = useCartStore((state) => state.getTotalItems());
+  const isCartBumped = useCartBump();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeLengthObj = HAIR_LENGTHS.find((l) => l.length === selectedLength) || HAIR_LENGTHS[0];
   const activeDensityObj = HAIR_DENSITIES.find((d) => d.density === selectedDensity) || HAIR_DENSITIES[0];
@@ -193,8 +201,24 @@ export default function ProductDetailPage() {
             <Link href="/login" className="hover:text-brand-accent transition-colors">
               <User className="w-6 h-6" />
             </Link>
-            <button onClick={() => window.dispatchEvent(new Event('open-mini-cart'))} className="relative hover:text-brand-accent transition-colors flex items-center">
+            <button
+              onClick={() => window.dispatchEvent(new Event('open-mini-cart'))}
+              data-cart-target="true"
+              className={`relative hover:text-brand-accent transition-all duration-300 flex items-center ${
+                isCartBumped ? 'scale-125 text-brand-accent' : 'scale-100'
+              }`}
+              aria-label="Cart"
+            >
               <ShoppingBag className="w-6 h-6" />
+              {mounted && cartCount > 0 && (
+                <span
+                  className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-soft transition-all duration-300 ${
+                    isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                  }`}
+                >
+                  {cartCount}
+                </span>
+              )}
             </button>
             <ThemeToggle />
           </div>

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, LayoutGrid, ShoppingBag, Heart, UserCircle } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
+import { useCartBump } from '@/components/CartFlyAnimation';
 import { useEffect, useState } from 'react';
 
 const tabs = [
@@ -19,6 +20,7 @@ export default function BottomNav() {
   const pathname = usePathname();
   const cartCount = useCartStore((s) => s.getTotalItems());
   const wishlistCount = useWishlistStore((s) => s.items.length);
+  const isCartBumped = useCartBump();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -38,16 +40,21 @@ export default function BottomNav() {
           const Icon = tab.icon;
           const badgeCount = tab.badge === 'cart' ? cartCount : tab.badge === 'wishlist' ? wishlistCount : 0;
 
+          const isCartTab = tab.badge === 'cart';
+
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className="relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1 group"
+              {...(isCartTab ? { 'data-cart-target': 'true' } : {})}
+              className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1 group transition-transform duration-300 ${
+                isCartTab && isCartBumped ? 'scale-115' : 'scale-100'
+              }`}
             >
               <div className="relative">
                 <Icon
                   className={`w-5 h-5 transition-colors duration-200 ${
-                    isActive ? 'text-brand-accent' : 'text-brand-muted group-hover:text-brand-text'
+                    isActive || (isCartTab && isCartBumped) ? 'text-brand-accent' : 'text-brand-muted group-hover:text-brand-text'
                   }`}
                   strokeWidth={isActive ? 2.2 : 1.5}
                   fill={isActive && tab.badge === 'wishlist' ? 'currentColor' : 'none'}
@@ -55,7 +62,9 @@ export default function BottomNav() {
                 {/* Badge */}
                 {mounted && badgeCount > 0 && (
                   <span
-                    className="absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-in zoom-in duration-200"
+                    className={`absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
+                      isCartTab && isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                    }`}
                   >
                     {badgeCount > 9 ? '9+' : badgeCount}
                   </span>

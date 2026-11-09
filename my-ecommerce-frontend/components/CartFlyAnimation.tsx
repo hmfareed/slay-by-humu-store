@@ -14,6 +14,30 @@ export interface FlyItem {
 }
 
 /**
+ * Hook to listen for cart impact bumps and provide an active pulse state.
+ */
+export function useCartBump() {
+  const [bump, setBump] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    const handleBump = () => {
+      setBump(true);
+      clearTimeout(timer);
+      timer = setTimeout(() => setBump(false), 400);
+    };
+
+    window.addEventListener('cart-icon-bump', handleBump);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('cart-icon-bump', handleBump);
+    };
+  }, []);
+
+  return bump;
+}
+
+/**
  * Triggers the fly-to-cart animation from a click event, element, or coordinates.
  */
 export function triggerFlyToCart(

@@ -12,6 +12,7 @@ import QuickViewModal from '@/components/QuickViewModal';
 import Footer from '@/components/Footer';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { useCartBump } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -33,6 +34,7 @@ const HAIR_CATEGORIES = [
 
 export default function HomePage() {
   const cartItemsCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
+  const isCartBumped = useCartBump();
   const [mounted, setMounted] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -172,10 +174,21 @@ export default function HomePage() {
               <Link href="/account" className="hover:text-brand-accent transition-colors text-brand-text" aria-label="Account">
                 <User className="w-5 h-5" />
               </Link>
-              <button onClick={openCart} className="relative hover:text-brand-accent transition-colors text-brand-text" aria-label="Cart">
+              <button
+                onClick={openCart}
+                data-cart-target="true"
+                className={`relative hover:text-brand-accent transition-all duration-300 text-brand-text ${
+                  isCartBumped ? 'scale-125 text-brand-accent' : 'scale-100'
+                }`}
+                aria-label="Cart"
+              >
                 <ShoppingBag className="w-5 h-5" />
                 {mounted && cartItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-brand-accent text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  <span
+                    className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
+                      isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                    }`}
+                  >
                     {cartItemsCount}
                   </span>
                 )}
