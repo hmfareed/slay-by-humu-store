@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { API_URL } from '@/src/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle, CheckCircle2, AlertCircle, RefreshCw, UploadCloud } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle, CheckCircle2, AlertCircle, RefreshCw, UploadCloud, Check, Ban } from 'lucide-react';
 import ProductThumbnail from '@/components/admin/ProductThumbnail';
 
 interface Product {
@@ -19,6 +19,7 @@ interface Product {
   longevity?: string;
   styling?: string;
   badge?: string;
+  isSoldOut?: boolean;
 }
 
 const STORE_CATEGORIES = ['Straight', 'Curly', 'Wavy', 'Short', 'Long'];
@@ -34,6 +35,9 @@ export default function AdminProductsPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
   
+  // Fast single-product toggle tracking
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
   // Form State
   const [formData, setFormData] = useState({
     name: '',
@@ -47,6 +51,7 @@ export default function AdminProductsPage() {
     longevity: '',
     styling: '',
     badge: '',
+    isSoldOut: false,
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -78,6 +83,7 @@ export default function AdminProductsPage() {
       longevity: '',
       styling: '',
       badge: '',
+      isSoldOut: false,
     });
     setImageFile(null);
     setPreviewUrl(null);
@@ -121,6 +127,50 @@ export default function AdminProductsPage() {
     }
   };
 
+  const handleToggleSoldOut = async (id: string, currentStatus?: boolean) => {
+    const targetProduct = products.find(p => p._id === id);
+    const newStatus = !currentStatus;
+    setTogglingId(id);
+
+    // Optimistic UI update
+    setProducts(prev =>
+      prev.map(p => (p._id === id ? { ...p, isSoldOut: newStatus } : p))
+    );
+
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/products/${id}/toggle-sold-out`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Failed to update sold out status');
+      }
+
+      const updated = await res.json();
+      setProducts(prev =>
+        prev.map(p => (p._id === id ? { ...p, isSoldOut: updated.isSoldOut } : p))
+      );
+      showToast(
+        'success',
+        `"${targetProduct?.name || 'Product'}" marked as ${updated.isSoldOut ? 'Sold Out' : 'Available'}.`
+      );
+    } catch (error: any) {
+      // Revert optimistic update on failure
+      setProducts(prev =>
+        prev.map(p => (p._id === id ? { ...p, isSoldOut: currentStatus } : p))
+      );
+      showToast('error', error.message || 'Failed to toggle sold out status.');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!imageFile && !editingProductId) {
@@ -144,6 +194,7 @@ export default function AdminProductsPage() {
     data.append('longevity', formData.longevity);
     data.append('styling', formData.styling);
     data.append('badge', formData.badge);
+    data.append('isSoldOut', String(formData.isSoldOut));
     if (imageFile) {
       data.append('images', imageFile);
     }
@@ -195,6 +246,7 @@ export default function AdminProductsPage() {
       longevity: product.longevity || '',
       styling: product.styling || '',
       badge: product.badge || '',
+      isSoldOut: Boolean(product.isSoldOut),
     });
     setIsModalOpen(true);
   };
@@ -251,24 +303,16 @@ export default function AdminProductsPage() {
               <AlertCircle size={18} className="text-rose-400 flex-shrink-0" />
             )}
             <span>{notification.message}</span>
-            <button
-              onClick={() => setNotification(null)}
-              className="ml-2 text-zinc-400 hover:text-white p-1 rounded-lg"
-            >
-              <X size={14} />
-            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      {/* Top Header / Stats Overview */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-zinc-900 dark:text-white">
-            Product Catalog
-          </h1>
-          <p className="text-zinc-500 dark:text-zinc-400 text-sm mt-1">
-            Curate your luxury virgin hair inventory, textures, lace types, and pricing.
+          <h1 className="text-2xl font-serif font-bold text-zinc-900 dark:text-white">Product Catalog</h1>
+          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+            Manage your inventory, pricing, sold out labels, and product media.
           </p>
         </div>
         <button 
@@ -276,27 +320,27 @@ export default function AdminProductsPage() {
             resetForm();
             setIsModalOpen(true);
           }}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C5A059] hover:bg-[#b08d4b] text-white rounded-xl active:scale-[0.98] transition-all duration-150 font-semibold text-xs uppercase tracking-wider shadow-sm"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-wider bg-[#C5A059] hover:bg-[#b08d4b] text-white active:scale-95 transition-all shadow-sm"
         >
-          <Plus size={16} /> New Product
+          <Plus size={16} /> Add New Product
         </button>
       </div>
 
-      {/* Toolbar */}
-      <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 flex flex-col sm:flex-row gap-4 items-center justify-between shadow-sm">
-        <div className="relative w-full sm:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+      {/* Search and Filters Bar */}
+      <div className="bg-white dark:bg-[#121212] border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+        <div className="relative w-full sm:w-80">
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input 
             type="text" 
-            placeholder="Search catalog by name or description..." 
-            value={search}
+            placeholder="Search by name, specs..." 
+            value={search} 
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 focus:border-[#C5A059]/60 transition-all text-zinc-800 dark:text-zinc-200 text-sm font-sans"
+            className="w-full pl-10 pr-4 py-2 bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 text-zinc-900 dark:text-white"
           />
         </div>
-        <div className="flex items-center gap-4 w-full sm:w-auto">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <select 
-            value={categoryFilter}
+            value={categoryFilter} 
             onChange={(e) => setCategoryFilter(e.target.value)}
             className="bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 text-xs font-medium py-2.5 px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 w-full sm:w-auto text-zinc-700 dark:text-zinc-300"
           >
@@ -333,12 +377,12 @@ export default function AdminProductsPage() {
                   src={product.images?.[0]} 
                   name={product.name} 
                   size="lg" 
-                  badge={product.badge} 
+                  badge={product.isSoldOut ? 'Sold Out' : product.badge} 
                 />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-zinc-900 dark:text-white truncate text-sm">{product.name}</h3>
                   <p className="text-xs text-zinc-500 mt-0.5">{product.category || 'Uncategorized'}</p>
-                  <div className="flex items-center gap-3 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="font-mono font-bold text-zinc-900 dark:text-white tabular-nums text-sm">
                       ₵{Number(product.price).toLocaleString()}
                     </span>
@@ -352,7 +396,26 @@ export default function AdminProductsPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2 mt-4 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
+              
+              {/* Quick Sold-Out Toggle for Mobile */}
+              <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
+                <span className="text-xs text-zinc-500 font-medium">Availability:</span>
+                <button
+                  type="button"
+                  onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
+                  disabled={togglingId === product._id}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase transition-all active:scale-95 border ${
+                    product.isSoldOut
+                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                      : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${product.isSoldOut ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+                  {product.isSoldOut ? 'Sold Out' : 'Available'}
+                </button>
+              </div>
+
+              <div className="flex gap-2 mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60">
                 <button 
                   onClick={() => handleEdit(product)}
                   className="flex-1 flex items-center justify-center gap-2 py-2 bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:text-[#C5A059] active:scale-95 rounded-xl font-semibold text-xs uppercase tracking-wider transition-all"
@@ -381,6 +444,7 @@ export default function AdminProductsPage() {
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Unit Price</th>
                 <th className="px-6 py-4">Inventory Level</th>
+                <th className="px-6 py-4">Availability</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -408,6 +472,9 @@ export default function AdminProductsPage() {
                       <td className="px-6 py-4">
                         <div className="h-6 w-20 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
                       </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-24 bg-zinc-200 dark:bg-zinc-800 rounded-full"></div>
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <div className="h-7 w-16 bg-zinc-200 dark:bg-zinc-800 rounded-lg ml-auto"></div>
                       </td>
@@ -416,7 +483,7 @@ export default function AdminProductsPage() {
                 </>
               ) : filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-zinc-500 text-sm">
+                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-500 text-sm">
                     No products cataloged matching current query.
                   </td>
                 </tr>
@@ -429,6 +496,7 @@ export default function AdminProductsPage() {
                           src={product.images?.[0]} 
                           name={product.name} 
                           size="sm" 
+                          badge={product.isSoldOut ? 'Sold Out' : undefined}
                         />
                         <div>
                           <p className="font-semibold text-zinc-900 dark:text-white text-sm">{product.name}</p>
@@ -450,6 +518,24 @@ export default function AdminProductsPage() {
                       }`}>
                         {product.stock} units
                       </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
+                        disabled={togglingId === product._id}
+                        className={`group inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
+                          product.isSoldOut
+                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20'
+                        } ${togglingId === product._id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+                        title="Click to toggle sold out status"
+                      >
+                        <span className={`w-2 h-2 rounded-full ${product.isSoldOut ? 'bg-rose-500' : 'bg-emerald-500'} transition-transform group-hover:scale-125`} />
+                        <span className="font-semibold tracking-wider uppercase text-[11px]">
+                          {product.isSoldOut ? 'Sold Out' : 'Available'}
+                        </span>
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
@@ -500,7 +586,7 @@ export default function AdminProductsPage() {
                     {editingProductId ? 'Edit Product Specifications' : 'Publish New Hair Product'}
                   </h2>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Configure pricing, texture, lace density, and media assets.
+                    Configure pricing, texture, lace density, sold out status, and media assets.
                   </p>
                 </div>
                 <button 
@@ -626,6 +712,32 @@ export default function AdminProductsPage() {
                       className="w-full px-4 py-2.5 bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#C5A059]/40 text-zinc-900 dark:text-white" 
                     />
                   </div>
+
+                  {/* Dedicated Sold Out Toggle in Modal */}
+                  <div className="md:col-span-2 p-4 rounded-xl border border-zinc-200/80 dark:border-zinc-800/80 bg-zinc-50/60 dark:bg-zinc-900/40 flex items-center justify-between gap-4">
+                    <div>
+                      <label className="text-xs font-semibold uppercase tracking-wider text-zinc-900 dark:text-white block">
+                        Mark as Sold Out
+                      </label>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                        Displays a luxury &ldquo;SOLD OUT&rdquo; badge on the storefront and disables purchasing.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, isSoldOut: !prev.isSoldOut }))}
+                      className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        formData.isSoldOut ? 'bg-rose-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          formData.isSoldOut ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
                   <div className="md:col-span-2">
                     <label className="block text-xs font-semibold uppercase tracking-wider mb-2 text-zinc-700 dark:text-zinc-300">
                       Product Image {editingProductId && '(Optional if keeping existing)'}
@@ -720,7 +832,7 @@ export default function AdminProductsPage() {
               <div className="text-center mb-6">
                 <h3 className="font-serif text-xl font-bold text-zinc-900 dark:text-white mb-2">Delete Product?</h3>
                 <p className="text-zinc-500 dark:text-zinc-400 text-xs leading-relaxed">
-                  Are you sure you want to permanently delete <span className="font-semibold text-zinc-900 dark:text-white">"{productToDelete.name}"</span> priced at <span className="font-mono font-semibold tabular-nums text-zinc-900 dark:text-white">₵{Number(productToDelete.price).toLocaleString()}</span>?
+                  Are you sure you want to permanently delete <span className="font-semibold text-zinc-900 dark:text-white">&ldquo;{productToDelete.name}&rdquo;</span> priced at <span className="font-mono font-semibold tabular-nums text-zinc-900 dark:text-white">₵{Number(productToDelete.price).toLocaleString()}</span>?
                 </p>
                 <p className="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-2.5">
                   ⚠️ This piece will be immediately removed from the customer storefront.
