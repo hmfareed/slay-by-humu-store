@@ -24,8 +24,8 @@ export function useCartBump() {
     const handleBump = () => {
       setBump(true);
       clearTimeout(timer);
-      // Keep bump active for 650ms to match the juicy landing bounce
-      timer = setTimeout(() => setBump(false), 650);
+      // Keep bump active for 550ms to match the energetic landing bounce
+      timer = setTimeout(() => setBump(false), 550);
     };
 
     window.addEventListener('cart-icon-bump', handleBump);
@@ -158,7 +158,18 @@ export default function CartFlyAnimation() {
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
       <AnimatePresence>
         {items.map((item) => {
-          const isFlyingUp = item.startY > item.targetY;
+          const isFlyingDown = item.targetY > item.startY;
+
+          // Natural toss trajectory:
+          // When flying down to bottom nav: lifts off upward by ~50px before swooping down into the bag
+          // When flying up to header: launches upward and cushions into the header
+          const midY = isFlyingDown
+            ? Math.max(25, item.startY - 50)
+            : item.targetY + (item.startY - item.targetY) * 0.28;
+
+          const midX = item.startX + (item.targetX - item.startX) * 0.45;
+          const approachX = item.startX + (item.targetX - item.startX) * 0.85;
+          const approachY = item.targetY - (isFlyingDown ? 14 : -8);
 
           return (
             <motion.div
@@ -170,32 +181,15 @@ export default function CartFlyAnimation() {
                 opacity: 1,
               }}
               animate={{
-                x: item.targetX,
-                y: item.targetY,
-                scale: 0.1,
-                opacity: [1, 1, 0],
+                x: [item.startX, midX, approachX, item.targetX],
+                y: [item.startY, midY, approachY, item.targetY],
+                scale: [1, 0.88, 0.48, 0.08],
+                opacity: [1, 1, 1, 0],
               }}
               transition={{
-                duration: 1.0,
-                x: {
-                  duration: 1.0,
-                  ease: isFlyingUp ? [0.3, 0, 0.2, 1] : [0.15, 0.85, 0.35, 1],
-                },
-                y: {
-                  duration: 1.0,
-                  ease: isFlyingUp
-                    ? [0.08, 0.82, 0.17, 1] // Fluid high-arc lift-off and smooth cushion into header
-                    : [0.45, 0, 0.85, 0.35], // Smooth drift across then swoops down into bottom nav
-                },
-                scale: {
-                  duration: 1.0,
-                  ease: [0.35, 0, 0.2, 1],
-                },
-                opacity: {
-                  duration: 1.0,
-                  times: [0, 0.88, 1],
-                  ease: 'easeOut',
-                },
+                duration: 0.65, // Swift, smooth, and energetic
+                ease: [0.22, 1, 0.36, 1], // easeOutCubic
+                times: [0, 0.35, 0.82, 1],
               }}
               onAnimationComplete={() => handleComplete(item.id)}
               className="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-brand-panel/95 border-2 border-brand-accent shadow-2xl backdrop-blur-md overflow-hidden flex items-center justify-center p-1"

@@ -45,12 +45,14 @@ export default function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              {...(isCartTab ? { 'data-cart-target': 'true' } : {})}
               className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1 group ${
                 isCartTab && isCartBumped ? 'animate-cart-landing' : ''
               }`}
             >
-              <div className="relative">
+              <div
+                {...(isCartTab ? { 'data-cart-target': 'true' } : {})}
+                className="relative"
+              >
                 <Icon
                   className={`w-5 h-5 transition-colors duration-200 ${
                     isActive || (isCartTab && isCartBumped) ? 'text-brand-accent' : 'text-brand-muted group-hover:text-brand-text'
