@@ -8,6 +8,7 @@ import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -91,9 +92,17 @@ export default function CategoriesPage() {
     }
   };
 
-  const handleAddToCart = async (product: Product) => {
+  const handleAddToCart = async (product: Product, e?: React.MouseEvent) => {
     await addToCart(product);
     showNotification(`${product.name} added to bag`, 'success');
+    if (e) {
+      triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+    } else {
+      triggerFlyToCart(
+        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+        product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
+      );
+    }
   };
 
   if (loading) {
@@ -261,7 +270,7 @@ export default function CategoriesPage() {
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
-                          handleAddToCart(product);
+                          handleAddToCart(product, e);
                         }}
                         className="absolute bottom-3 left-3 right-3 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.15em] py-2.5 rounded-full opacity-0 translate-y-3 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300 text-center"
                       >

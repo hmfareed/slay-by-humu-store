@@ -9,7 +9,7 @@ import QuickViewModal from '@/components/QuickViewModal';
 import { useCartStore } from '@/src/store/cartStore';
 import { API_URL } from '@/src/lib/api';
 import { getOptimizedImageUrl } from '@/src/lib/images';
-import { useCartBump } from '@/components/CartFlyAnimation';
+import { useCartBump, triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 import { Suspense } from 'react';
 
@@ -275,7 +275,7 @@ function ProductsContent() {
                             e.preventDefault();
                             e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 });
-                            window.dispatchEvent(new Event('open-mini-cart'));
+                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
                           }}
                           className="flex-1 text-center bg-brand-accent text-white px-0 py-3 rounded-2xl text-xs font-sans font-semibold tracking-widest uppercase shadow-md hover:bg-amber-600 transition-colors"
                         >
@@ -301,7 +301,7 @@ function ProductsContent() {
                             e.preventDefault();
                             e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 });
-                            window.dispatchEvent(new Event('open-mini-cart'));
+                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
                           }}
                           className="md:hidden flex-shrink-0 w-8 h-8 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
                           aria-label={`Add ${product.name} to bag`}

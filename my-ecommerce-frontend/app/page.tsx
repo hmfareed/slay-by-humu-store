@@ -12,7 +12,7 @@ import QuickViewModal from '@/components/QuickViewModal';
 import Footer from '@/components/Footer';
 import HomePageSkeleton from '@/components/HomePageSkeleton';
 import { getOptimizedImageUrl } from '@/src/lib/images';
-import { useCartBump } from '@/components/CartFlyAnimation';
+import { useCartBump, triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -419,7 +419,7 @@ export default function HomePage() {
                             e.preventDefault();
                             e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
-                            window.dispatchEvent(new Event('open-mini-cart'));
+                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
                           }}
                           className="flex-1 text-center bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.2em] py-2.5 rounded-full shadow-md hover:bg-amber-600 transition-colors"
                         >
@@ -444,7 +444,7 @@ export default function HomePage() {
                             e.preventDefault();
                             e.stopPropagation();
                             useCartStore.getState().addItem({ ...product, quantity: 1 } as any);
-                            window.dispatchEvent(new Event('open-mini-cart'));
+                            triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
                           }}
                           className="md:hidden flex-shrink-0 w-8 h-8 mt-0.5 rounded-full bg-brand-accent/10 hover:bg-brand-accent text-brand-accent hover:text-white flex items-center justify-center transition-colors shadow-sm"
                           aria-label={`Add ${product.name} to bag`}

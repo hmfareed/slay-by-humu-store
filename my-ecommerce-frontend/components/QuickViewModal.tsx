@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Check } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -28,7 +29,11 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
   if (!product) return null;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e?: React.MouseEvent) => {
+    // Capture click position before timeout
+    const clickPos = e ? { x: e.clientX, y: e.clientY } : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const imgUrl = product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined;
+
     setAdding(true);
     setTimeout(() => {
       addToCart({
@@ -37,7 +42,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
       });
       setAdding(false);
       setAdded(true);
-      window.dispatchEvent(new Event('open-mini-cart'));
+      triggerFlyToCart(clickPos, imgUrl);
       
       setTimeout(() => {
         setAdded(false);
@@ -102,7 +107,7 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
 
               <div className="mt-auto pt-8 border-t border-brand-text/5">
                 <button
-                  onClick={handleAddToCart}
+                  onClick={(e) => handleAddToCart(e)}
                   disabled={adding || added}
                   className="w-full btn-gold py-5 text-lg font-sans font-medium flex items-center justify-center gap-3 relative overflow-hidden group disabled:opacity-80 disabled:cursor-not-allowed"
                 >

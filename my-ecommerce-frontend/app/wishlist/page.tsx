@@ -8,6 +8,7 @@ import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useCartStore } from '@/src/store/cartStore';
 import { useNotification } from '@/src/context/NotificationContext';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 export default function WishlistPage() {
   const items = useWishlistStore((s) => s.items);
@@ -19,10 +20,18 @@ export default function WishlistPage() {
 
   useEffect(() => setMounted(true), []);
 
-  const handleMoveToCart = async (product: any) => {
+  const handleMoveToCart = async (product: any, e?: React.MouseEvent) => {
     await addToCart(product);
     removeItem(product._id);
     showNotification(`${product.name} moved to your bag`, 'success');
+    if (e) {
+      triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+    } else {
+      triggerFlyToCart(
+        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+        product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
+      );
+    }
   };
 
   const handleRemove = (productId: string, name: string) => {
@@ -124,7 +133,7 @@ export default function WishlistPage() {
 
                     {/* Move to Cart button */}
                     <button
-                      onClick={() => handleMoveToCart(product)}
+                      onClick={(e) => handleMoveToCart(product, e)}
                       className="absolute bottom-3 left-3 right-3 bg-brand-accent text-white text-[10px] font-sans font-semibold uppercase tracking-[0.15em] py-2.5 rounded-full flex items-center justify-center gap-1.5 opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300"
                     >
                       <ShoppingBag className="w-3 h-3" />

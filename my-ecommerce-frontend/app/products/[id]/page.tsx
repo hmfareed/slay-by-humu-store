@@ -15,7 +15,7 @@ import ProductReviews from '@/components/ProductReviews';
 import { useNotification } from '@/src/context/NotificationContext';
 import { API_URL } from '@/src/lib/api';
 import { getOptimizedImageUrl } from '@/src/lib/images';
-import { useCartBump } from '@/components/CartFlyAnimation';
+import { useCartBump, triggerFlyToCart } from '@/components/CartFlyAnimation';
 
 interface Product {
   _id: string;
@@ -152,7 +152,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = async (e?: React.MouseEvent) => {
     if (!product) return;
     const itemToAdd = {
       ...product,
@@ -163,7 +163,14 @@ export default function ProductDetailPage() {
     };
     await addToCart(itemToAdd as any);
     showNotification(`${product.name} (${activeLengthObj.length}, ${activeDensityObj.density}) added to your collection`, 'success');
-    window.dispatchEvent(new Event('open-mini-cart'));
+    if (e) {
+      triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
+    } else {
+      triggerFlyToCart(
+        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+        product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
+      );
+    }
   };
 
   const handleBack = () => {
