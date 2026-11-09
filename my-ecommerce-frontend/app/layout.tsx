@@ -10,6 +10,7 @@ import { NotificationProvider } from "@/src/context/NotificationContext";
 import { AuthProvider } from "@/src/context/AuthContext";
 import { LanguageProvider } from "@/src/context/LanguageContext";
 import Toaster from "@/components/Toaster";
+import CartFlyAnimation from "@/components/CartFlyAnimation";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -43,6 +44,7 @@ export default function RootLayout({
                   <SlideOutCart />
                   <SlideOutNav />
                   <BottomNav />
+                  <CartFlyAnimation />
                 </SmoothScroll>
               </LanguageProvider>
             </AuthProvider>
