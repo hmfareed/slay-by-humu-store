@@ -158,18 +158,7 @@ export default function CartFlyAnimation() {
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
       <AnimatePresence>
         {items.map((item) => {
-          const dy = item.startY - item.targetY;
-          const dx = item.targetX - item.startX;
-
-          // Safe trajectory points strictly inside the viewport
-          const point1X = item.startX + dx * 0.45;
-          const point1Y = item.targetY + dy * 0.35;
-
-          const point2X = item.startX + dx * 0.85;
-          const point2Y = item.targetY + dy * 0.1;
-
-          const point3X = item.startX + dx * 0.96;
-          const point3Y = item.targetY + 4;
+          const isFlyingUp = item.startY > item.targetY;
 
           return (
             <motion.div
@@ -179,19 +168,34 @@ export default function CartFlyAnimation() {
                 y: item.startY,
                 scale: 1,
                 opacity: 1,
-                rotate: 0,
               }}
               animate={{
-                x: [item.startX, point1X, point2X, point3X, item.targetX],
-                y: [item.startY, point1Y, point2Y, point3Y, item.targetY],
-                scale: [1, 0.88, 0.58, 0.35, 0.08],
-                opacity: [1, 1, 1, 0.9, 0],
-                rotate: [0, -8, 6, -3, 0],
+                x: item.targetX,
+                y: item.targetY,
+                scale: 0.1,
+                opacity: [1, 1, 0],
               }}
               transition={{
-                duration: 0.92, // Slowed down so user can follow with eyes
-                ease: [0.25, 0.1, 0.25, 1],
-                times: [0, 0.4, 0.75, 0.92, 1],
+                duration: 1.0,
+                x: {
+                  duration: 1.0,
+                  ease: [0.3, 0, 0.2, 1],
+                },
+                y: {
+                  duration: 1.0,
+                  ease: isFlyingUp
+                    ? [0.08, 0.82, 0.17, 1] // Fluid high-arc lift-off and smooth cushion into the bag
+                    : [0.25, 0.1, 0.25, 1],
+                },
+                scale: {
+                  duration: 1.0,
+                  ease: [0.35, 0, 0.2, 1],
+                },
+                opacity: {
+                  duration: 1.0,
+                  times: [0, 0.88, 1],
+                  ease: 'easeOut',
+                },
               }}
               onAnimationComplete={() => handleComplete(item.id)}
               className="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-brand-panel/95 border-2 border-brand-accent shadow-2xl backdrop-blur-md overflow-hidden flex items-center justify-center p-1"
