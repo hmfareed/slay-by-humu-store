@@ -90,6 +90,73 @@ export function triggerFlyToCart(
   );
 }
 
+/**
+ * Calculates a mathematically continuous cubic Bézier flight trajectory.
+ * Prevents abrupt velocity jumps, providing a silky smooth physical arc.
+ */
+function getTrajectory(
+  startX: number,
+  startY: number,
+  targetX: number,
+  targetY: number,
+  steps = 14
+) {
+  const isFlyingDown = targetY > startY;
+
+  // Horizontal cubic control points: gentle acceleration then deceleration
+  const p0X = startX;
+  const p1X = startX + (targetX - startX) * 0.25;
+  const p2X = startX + (targetX - startX) * 0.75;
+  const p3X = targetX;
+
+  // Vertical cubic control points:
+  const p0Y = startY;
+  // If flying down to bottom nav: loft upwards by ~30-40px before curving down into bottom nav
+  // If flying up to header: energetic launch upwards, cushioning into top header
+  const p1Y = isFlyingDown
+    ? Math.max(25, startY - 110)
+    : startY - (startY - targetY) * 0.6;
+
+  const p2Y = isFlyingDown
+    ? startY + (targetY - startY) * 0.45
+    : Math.max(15, targetY - 25);
+
+  const p3Y = targetY;
+
+  const xs: number[] = [];
+  const ys: number[] = [];
+  const scales: number[] = [];
+  const opacities: number[] = [];
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = 1 - t;
+    const u3 = u * u * u;
+    const u2t = 3 * u * u * t;
+    const ut2 = 3 * u * t * t;
+    const t3 = t * t * t;
+
+    const x = u3 * p0X + u2t * p1X + ut2 * p2X + t3 * p3X;
+    const y = u3 * p0Y + u2t * p1Y + ut2 * p2Y + t3 * p3Y;
+
+    // Smooth continuous shrink from full size (1.0) down to miniature (0.12)
+    const scale = 1 - t * 0.88;
+
+    // Retain full visibility until entering the cart, then cleanly dissolve
+    let opacity = 1;
+    if (t > 0.75) {
+      opacity = 1 - (t - 0.75) / 0.25;
+    }
+
+    xs.push(Math.round(x));
+    ys.push(Math.round(y));
+    scales.push(Number(scale.toFixed(2)));
+    opacities.push(Number(opacity.toFixed(2)));
+  }
+
+  return { xs, ys, scales, opacities };
+}
+
 export default function CartFlyAnimation() {
   const [items, setItems] = useState<FlyItem[]>([]);
 
@@ -158,18 +225,12 @@ export default function CartFlyAnimation() {
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
       <AnimatePresence>
         {items.map((item) => {
-          const isFlyingDown = item.targetY > item.startY;
-
-          // Natural toss trajectory:
-          // When flying down to bottom nav: lifts off upward by ~50px before swooping down into the bag
-          // When flying up to header: launches upward and cushions into the header
-          const midY = isFlyingDown
-            ? Math.max(25, item.startY - 50)
-            : item.targetY + (item.startY - item.targetY) * 0.28;
-
-          const midX = item.startX + (item.targetX - item.startX) * 0.45;
-          const approachX = item.startX + (item.targetX - item.startX) * 0.85;
-          const approachY = item.targetY - (isFlyingDown ? 14 : -8);
+          const { xs, ys, scales, opacities } = getTrajectory(
+            item.startX,
+            item.startY,
+            item.targetX,
+            item.targetY
+          );
 
           return (
             <motion.div
@@ -181,15 +242,14 @@ export default function CartFlyAnimation() {
                 opacity: 1,
               }}
               animate={{
-                x: [item.startX, midX, approachX, item.targetX],
-                y: [item.startY, midY, approachY, item.targetY],
-                scale: [1, 0.88, 0.48, 0.08],
-                opacity: [1, 1, 1, 0],
+                x: xs,
+                y: ys,
+                scale: scales,
+                opacity: opacities,
               }}
               transition={{
-                duration: 0.65, // Swift, smooth, and energetic
-                ease: [0.22, 1, 0.36, 1], // easeOutCubic
-                times: [0, 0.35, 0.82, 1],
+                duration: 0.85, // Balanced, natural, and silky smooth
+                ease: 'linear', // Evenly sampled along continuous cubic Bézier curve
               }}
               onAnimationComplete={() => handleComplete(item.id)}
               className="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-brand-panel/95 border-2 border-brand-accent shadow-2xl backdrop-blur-md overflow-hidden flex items-center justify-center p-1"
