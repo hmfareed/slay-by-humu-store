@@ -10,3 +10,7 @@ my-ecommerce-frontend/.env.local
 .env*
 !.env.example
 my-ecommerce-frontend/package-lock.json
+
+# Internal agent workflows and planning specs
+.superpowers/
+docs/
