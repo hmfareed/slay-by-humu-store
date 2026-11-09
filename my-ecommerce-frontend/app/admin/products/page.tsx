@@ -399,19 +399,28 @@ export default function AdminProductsPage() {
               
               {/* Quick Sold-Out Toggle for Mobile */}
               <div className="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800/60 flex items-center justify-between">
-                <span className="text-xs text-zinc-500 font-medium">Availability:</span>
+                <div>
+                  <span className="text-xs font-semibold text-zinc-900 dark:text-white block">Sold Out Status</span>
+                  <span className={`text-[11px] font-medium ${product.isSoldOut ? 'text-rose-500 font-bold' : 'text-zinc-500'}`}>
+                    {product.isSoldOut ? 'Marked as Sold Out' : 'Available in store'}
+                  </span>
+                </div>
                 <button
                   type="button"
+                  role="switch"
+                  aria-checked={Boolean(product.isSoldOut)}
                   onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
                   disabled={togglingId === product._id}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wider uppercase transition-all active:scale-95 border ${
-                    product.isSoldOut
-                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30'
-                      : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
-                  }`}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    product.isSoldOut ? 'bg-rose-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                  } ${togglingId === product._id ? 'opacity-50 cursor-wait' : ''}`}
+                  title={product.isSoldOut ? 'Click to mark as Available' : 'Click to mark as Sold Out'}
                 >
-                  <span className={`w-2 h-2 rounded-full ${product.isSoldOut ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-                  {product.isSoldOut ? 'Sold Out' : 'Available'}
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      product.isSoldOut ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
                 </button>
               </div>
 
@@ -520,25 +529,47 @@ export default function AdminProductsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
-                        disabled={togglingId === product._id}
-                        className={`group inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium border transition-all active:scale-95 ${
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={Boolean(product.isSoldOut)}
+                          onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
+                          disabled={togglingId === product._id}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                            product.isSoldOut ? 'bg-rose-500' : 'bg-zinc-300 dark:bg-zinc-700'
+                          } ${togglingId === product._id ? 'opacity-50 cursor-wait' : ''}`}
+                          title={product.isSoldOut ? 'Click to mark as Available' : 'Click to mark as Sold Out'}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                              product.isSoldOut ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
+                        </button>
+                        <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border font-mono ${
                           product.isSoldOut
-                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25 hover:bg-rose-500/20'
-                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20'
-                        } ${togglingId === product._id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
-                        title="Click to toggle sold out status"
-                      >
-                        <span className={`w-2 h-2 rounded-full ${product.isSoldOut ? 'bg-rose-500' : 'bg-emerald-500'} transition-transform group-hover:scale-125`} />
-                        <span className="font-semibold tracking-wider uppercase text-[11px]">
+                            ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25'
+                            : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25'
+                        }`}>
                           {product.isSoldOut ? 'Sold Out' : 'Available'}
                         </span>
-                      </button>
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        <button 
+                          onClick={() => handleToggleSoldOut(product._id, product.isSoldOut)}
+                          disabled={togglingId === product._id}
+                          className={`p-2 rounded-lg active:scale-95 transition-all ${
+                            product.isSoldOut
+                              ? 'text-rose-600 bg-rose-500/15 hover:bg-rose-500/25'
+                              : 'text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10'
+                          }`}
+                          title={product.isSoldOut ? 'Mark as Available' : 'Mark as Sold Out'}
+                        >
+                          <Ban size={15} />
+                        </button>
                         <button 
                           onClick={() => handleEdit(product)}
                           className="p-2 text-zinc-500 hover:text-[#C5A059] hover:bg-[#C5A059]/10 rounded-lg active:scale-95 transition-all"
