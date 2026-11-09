@@ -93,8 +93,6 @@ export default function CategoriesPage() {
   };
 
   const handleAddToCart = async (product: Product, e?: React.MouseEvent) => {
-    await addToCart(product);
-    showNotification(`${product.name} added to bag`, 'success');
     if (e) {
       triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
     } else {
@@ -103,6 +101,8 @@ export default function CategoriesPage() {
         product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
       );
     }
+    await addToCart(product);
+    showNotification(`${product.name} added to bag`, 'success');
   };
 
   if (loading) {

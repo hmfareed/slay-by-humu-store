@@ -24,7 +24,8 @@ export function useCartBump() {
     const handleBump = () => {
       setBump(true);
       clearTimeout(timer);
-      timer = setTimeout(() => setBump(false), 400);
+      // Keep bump active for 650ms to match the juicy landing bounce
+      timer = setTimeout(() => setBump(false), 650);
     };
 
     window.addEventListener('cart-icon-bump', handleBump);
@@ -41,7 +42,7 @@ export function useCartBump() {
  * Triggers the fly-to-cart animation from a click event, element, or coordinates.
  */
 export function triggerFlyToCart(
-  source: React.MouseEvent | MouseEvent | HTMLElement | DOMRect | { x: number; y: number },
+  source?: React.MouseEvent | MouseEvent | HTMLElement | DOMRect | { x: number; y: number } | null,
   imageUrl?: string
 ) {
   if (typeof window === 'undefined') return;
@@ -52,30 +53,34 @@ export function triggerFlyToCart(
     return;
   }
 
-  let startX = 0;
-  let startY = 0;
+  let startX = window.innerWidth / 2;
+  let startY = window.innerHeight / 2;
 
-  if ('clientX' in source && 'clientY' in source) {
-    const mouseEvt = source as MouseEvent;
-    if (mouseEvt.currentTarget && mouseEvt.currentTarget instanceof HTMLElement) {
-      const rect = mouseEvt.currentTarget.getBoundingClientRect();
+  if (source) {
+    if ('currentTarget' in source && source.currentTarget instanceof HTMLElement) {
+      const rect = source.currentTarget.getBoundingClientRect();
       startX = rect.left + rect.width / 2;
       startY = rect.top + rect.height / 2;
-    } else {
+    } else if ('target' in source && source.target instanceof HTMLElement) {
+      const rect = source.target.getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+    } else if ('clientX' in source && 'clientY' in source) {
+      const mouseEvt = source as MouseEvent;
       startX = mouseEvt.clientX;
       startY = mouseEvt.clientY;
+    } else if ('getBoundingClientRect' in source && typeof source.getBoundingClientRect === 'function') {
+      const rect = source.getBoundingClientRect();
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+    } else if ('left' in source && 'top' in source && 'width' in source) {
+      const rect = source as DOMRect;
+      startX = rect.left + rect.width / 2;
+      startY = rect.top + rect.height / 2;
+    } else if ('x' in source && 'y' in source) {
+      startX = source.x;
+      startY = source.y;
     }
-  } else if ('getBoundingClientRect' in source && typeof source.getBoundingClientRect === 'function') {
-    const rect = source.getBoundingClientRect();
-    startX = rect.left + rect.width / 2;
-    startY = rect.top + rect.height / 2;
-  } else if ('left' in source && 'top' in source && 'width' in source) {
-    const rect = source as DOMRect;
-    startX = rect.left + rect.width / 2;
-    startY = rect.top + rect.height / 2;
-  } else if ('x' in source && 'y' in source) {
-    startX = source.x;
-    startY = source.y;
   }
 
   window.dispatchEvent(
@@ -89,6 +94,12 @@ export default function CartFlyAnimation() {
   const [items, setItems] = useState<FlyItem[]>([]);
 
   const handleStart = useCallback((event: Event) => {
+    // Respect reduced motion if event was dispatched directly
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      window.dispatchEvent(new CustomEvent('cart-icon-bump'));
+      return;
+    }
+
     const customEvent = event as CustomEvent<{ startX: number; startY: number; imageUrl?: string }>;
     const { startX, startY, imageUrl } = customEvent.detail || {};
 
@@ -102,12 +113,14 @@ export default function CartFlyAnimation() {
       return (
         rect.width > 0 &&
         rect.height > 0 &&
-        rect.top >= 0 &&
-        rect.bottom <= window.innerHeight &&
-        rect.left >= 0 &&
-        rect.right <= window.innerWidth
+        rect.top < window.innerHeight &&
+        rect.bottom > 0 &&
+        rect.left < window.innerWidth &&
+        rect.right > 0 &&
+        window.getComputedStyle(el).display !== 'none' &&
+        window.getComputedStyle(el).visibility !== 'hidden'
       );
-    }) || targets[0];
+    });
 
     if (visibleTarget) {
       const rect = visibleTarget.getBoundingClientRect();
@@ -145,44 +158,56 @@ export default function CartFlyAnimation() {
     <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden">
       <AnimatePresence>
         {items.map((item) => {
-          const size = 56;
-          const half = size / 2;
-          // Calculate an arc midpoint for a natural toss curve into the cart
-          const midX = (item.startX + item.targetX) / 2;
-          const midY = Math.min(item.startY, item.targetY) - 60;
+          const dy = item.startY - item.targetY;
+          const dx = item.targetX - item.startX;
+
+          // Safe trajectory points strictly inside the viewport
+          const point1X = item.startX + dx * 0.45;
+          const point1Y = item.targetY + dy * 0.35;
+
+          const point2X = item.startX + dx * 0.85;
+          const point2Y = item.targetY + dy * 0.1;
+
+          const point3X = item.startX + dx * 0.96;
+          const point3Y = item.targetY + 4;
 
           return (
             <motion.div
               key={item.id}
               initial={{
-                x: item.startX - half,
-                y: item.startY - half,
+                x: item.startX,
+                y: item.startY,
                 scale: 1,
                 opacity: 1,
+                rotate: 0,
               }}
               animate={{
-                x: [item.startX - half, midX - half, item.targetX - half * 0.4],
-                y: [item.startY - half, midY - half, item.targetY - half * 0.4],
-                scale: [1, 0.85, 0.25],
-                opacity: [1, 1, 0],
+                x: [item.startX, point1X, point2X, point3X, item.targetX],
+                y: [item.startY, point1Y, point2Y, point3Y, item.targetY],
+                scale: [1, 0.88, 0.58, 0.35, 0.08],
+                opacity: [1, 1, 1, 0.9, 0],
+                rotate: [0, -8, 6, -3, 0],
               }}
               transition={{
-                duration: 0.55,
-                ease: [0.23, 1, 0.32, 1], // Strong ease-out as prescribed
-                times: [0, 0.5, 1],
+                duration: 0.92, // Slowed down so user can follow with eyes
+                ease: [0.25, 0.1, 0.25, 1],
+                times: [0, 0.4, 0.75, 0.92, 1],
               }}
               onAnimationComplete={() => handleComplete(item.id)}
-              className="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-brand-panel/90 border-2 border-brand-accent/50 shadow-2xl backdrop-blur-md overflow-hidden flex items-center justify-center p-1"
-              style={{ willChange: 'transform, opacity' }}
+              className="absolute left-0 top-0 w-14 h-14 rounded-2xl bg-brand-panel/95 border-2 border-brand-accent shadow-2xl backdrop-blur-md overflow-hidden flex items-center justify-center p-1"
+              style={{
+                translateX: '-50%',
+                translateY: '-50%',
+                willChange: 'transform, opacity',
+              }}
             >
               {item.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={item.imageUrl}
-                  alt="Item flying to bag"
+                  alt="Item entering cart"
                   className="w-full h-full object-cover rounded-xl"
                   onError={(e) => {
-                    // Fallback to ShoppingBag icon if image fails
                     (e.currentTarget as HTMLElement).style.display = 'none';
                   }}
                 />

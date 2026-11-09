@@ -114,16 +114,16 @@ function ProductsContent() {
             <button
               onClick={openCart}
               data-cart-target="true"
-              className={`hover:text-brand-accent transition-all duration-300 relative flex items-center ${
-                isCartBumped ? 'scale-125 text-brand-accent' : 'scale-100'
+              className={`hover:text-brand-accent transition-colors relative flex items-center ${
+                isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
               }`}
               aria-label="Cart"
             >
               <ShoppingBag className="w-6 h-6" />
               {mounted && cartItemsCount > 0 && (
                 <span
-                  className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-soft transition-all duration-300 ${
-                    isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                  className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-soft ${
+                    isCartBumped ? 'animate-badge-landing ring-2 ring-brand-accent/50' : ''
                   }`}
                 >
                   {cartItemsCount}

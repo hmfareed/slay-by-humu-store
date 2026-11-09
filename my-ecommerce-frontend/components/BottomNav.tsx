@@ -47,8 +47,8 @@ export default function BottomNav() {
               key={tab.href}
               href={tab.href}
               {...(isCartTab ? { 'data-cart-target': 'true' } : {})}
-              className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1 group transition-transform duration-300 ${
-                isCartTab && isCartBumped ? 'scale-115' : 'scale-100'
+              className={`relative flex flex-col items-center justify-center gap-0.5 flex-1 py-1 group ${
+                isCartTab && isCartBumped ? 'animate-cart-landing' : ''
               }`}
             >
               <div className="relative">
@@ -62,8 +62,8 @@ export default function BottomNav() {
                 {/* Badge */}
                 {mounted && badgeCount > 0 && (
                   <span
-                    className={`absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center transition-all duration-300 ${
-                      isCartTab && isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                    className={`absolute -top-1.5 -right-2 bg-brand-accent text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center ${
+                      isCartTab && isCartBumped ? 'animate-badge-landing ring-2 ring-brand-accent/50' : ''
                     }`}
                   >
                     {badgeCount > 9 ? '9+' : badgeCount}

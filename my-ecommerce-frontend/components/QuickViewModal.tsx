@@ -30,25 +30,25 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
   if (!product) return null;
 
   const handleAddToCart = (e?: React.MouseEvent) => {
-    // Capture click position before timeout
+    // Capture click position
     const clickPos = e ? { x: e.clientX, y: e.clientY } : { x: window.innerWidth / 2, y: window.innerHeight / 2 };
     const imgUrl = product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined;
 
+    triggerFlyToCart(clickPos, imgUrl);
     setAdding(true);
+    addToCart({
+      ...product,
+      quantity: 1,
+    });
+
     setTimeout(() => {
-      addToCart({
-        ...product,
-        quantity: 1,
-      });
       setAdding(false);
       setAdded(true);
-      triggerFlyToCart(clickPos, imgUrl);
-      
       setTimeout(() => {
         setAdded(false);
         onClose();
-      }, 1000);
-    }, 500);
+      }, 900);
+    }, 300);
   };
 
   return (

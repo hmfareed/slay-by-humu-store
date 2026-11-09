@@ -177,16 +177,16 @@ export default function HomePage() {
               <button
                 onClick={openCart}
                 data-cart-target="true"
-                className={`relative hover:text-brand-accent transition-all duration-300 text-brand-text ${
-                  isCartBumped ? 'scale-125 text-brand-accent' : 'scale-100'
+                className={`relative hover:text-brand-accent text-brand-text transition-colors ${
+                  isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
                 }`}
                 aria-label="Cart"
               >
                 <ShoppingBag className="w-5 h-5" />
                 {mounted && cartItemsCount > 0 && (
                   <span
-                    className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold transition-all duration-300 ${
-                      isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                    className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold ${
+                      isCartBumped ? 'animate-badge-landing ring-2 ring-brand-accent/50' : ''
                     }`}
                   >
                     {cartItemsCount}

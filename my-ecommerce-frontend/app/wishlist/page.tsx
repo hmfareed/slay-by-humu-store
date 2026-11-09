@@ -21,9 +21,6 @@ export default function WishlistPage() {
   useEffect(() => setMounted(true), []);
 
   const handleMoveToCart = async (product: any, e?: React.MouseEvent) => {
-    await addToCart(product);
-    removeItem(product._id);
-    showNotification(`${product.name} moved to your bag`, 'success');
     if (e) {
       triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
     } else {
@@ -32,6 +29,9 @@ export default function WishlistPage() {
         product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
       );
     }
+    await addToCart(product);
+    removeItem(product._id);
+    showNotification(`${product.name} moved to your bag`, 'success');
   };
 
   const handleRemove = (productId: string, name: string) => {

@@ -154,6 +154,16 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async (e?: React.MouseEvent) => {
     if (!product) return;
+    const imgUrl = product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined;
+    if (e) {
+      triggerFlyToCart(e, imgUrl);
+    } else {
+      triggerFlyToCart(
+        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+        imgUrl
+      );
+    }
+
     const itemToAdd = {
       ...product,
       price: currentPrice,
@@ -163,14 +173,6 @@ export default function ProductDetailPage() {
     };
     await addToCart(itemToAdd as any);
     showNotification(`${product.name} (${activeLengthObj.length}, ${activeDensityObj.density}) added to your collection`, 'success');
-    if (e) {
-      triggerFlyToCart(e, product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined);
-    } else {
-      triggerFlyToCart(
-        { x: window.innerWidth / 2, y: window.innerHeight / 2 },
-        product.images?.[0] ? getOptimizedImageUrl(product.images[0], 200) : undefined
-      );
-    }
   };
 
   const handleBack = () => {
@@ -211,16 +213,16 @@ export default function ProductDetailPage() {
             <button
               onClick={() => window.dispatchEvent(new Event('open-mini-cart'))}
               data-cart-target="true"
-              className={`relative hover:text-brand-accent transition-all duration-300 flex items-center ${
-                isCartBumped ? 'scale-125 text-brand-accent' : 'scale-100'
+              className={`relative hover:text-brand-accent transition-colors flex items-center ${
+                isCartBumped ? 'animate-cart-landing text-brand-accent' : ''
               }`}
               aria-label="Cart"
             >
               <ShoppingBag className="w-6 h-6" />
               {mounted && cartCount > 0 && (
                 <span
-                  className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-soft transition-all duration-300 ${
-                    isCartBumped ? 'scale-125 ring-2 ring-brand-accent/50' : 'scale-100'
+                  className={`absolute -top-2 -right-2 bg-brand-accent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold shadow-soft ${
+                    isCartBumped ? 'animate-badge-landing ring-2 ring-brand-accent/50' : ''
                   }`}
                 >
                   {cartCount}
@@ -423,7 +425,7 @@ export default function ProductDetailPage() {
           <div ref={buyButtonRef} className="flex gap-4 font-sans mt-auto border-t border-brand-text/10 pt-8">
             <MagneticButton className="flex-1 w-full block">
               <button
-                onClick={handleAddToCart}
+                onClick={(e) => handleAddToCart(e)}
                 className="w-full btn-gold py-5 shadow-soft border-none hover:cursor-pointer text-xs uppercase tracking-widest font-semibold"
               >
                 Add To Bag — ₵{currentPrice.toFixed(2)}
@@ -465,7 +467,7 @@ export default function ProductDetailPage() {
             </div>
 
             <button
-              onClick={handleAddToCart}
+              onClick={(e) => handleAddToCart(e)}
               className="btn-gold py-2.5 px-5 rounded-full text-[11px] font-sans font-semibold tracking-wider whitespace-nowrap shadow-md flex-shrink-0"
             >
               Add To Bag
