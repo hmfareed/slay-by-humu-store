@@ -1,7 +1,7 @@
 'use client';
 
 import { useCartStore } from '@/src/store/cartStore';
-import { X, ShoppingBag, Minus, Plus } from 'lucide-react';
+import { X, ShoppingBag, Minus, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -90,8 +90,20 @@ export default function SlideOutCart() {
                     </div>
 
                     <div className="flex-1 flex flex-col justify-center min-w-0">
-                      <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-sans font-medium text-brand-text tracking-wide truncate pr-2">{item.product.name}</h3>
+                      <div className="flex justify-between items-start mb-1 gap-2">
+                        <h3 className="font-sans font-medium text-brand-text tracking-wide truncate flex-1">{item.product.name}</h3>
+                        <button 
+                          type="button"
+                          onClick={async () => {
+                            await removeItem(itemKey);
+                            showNotification(`${item.product.name} removed from bag`, 'info');
+                          }}
+                          className="p-1 -mr-1 -mt-1 rounded-lg text-brand-muted/70 hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+                          aria-label={`Remove ${item.product.name} from bag`}
+                          title="Remove from bag"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
                       <p className="text-brand-muted text-xs font-sans uppercase tracking-widest mb-1.5">{typeof item.product.category === 'object' ? item.product.category.name : item.product.category}</p>
                       
@@ -131,16 +143,6 @@ export default function SlideOutCart() {
                         </div>
                         <p className="text-base font-semibold text-brand-text tracking-tight">₵{(item.product.price * item.quantity).toFixed(2)}</p>
                       </div>
-                      
-                      <button 
-                        onClick={async () => {
-                          await removeItem(itemKey);
-                          showNotification('Item removed from collection', 'info');
-                        }}
-                        className="text-[11px] text-brand-muted font-sans uppercase tracking-[0.2em] mt-3 hover:text-red-500 transition-colors self-start"
-                      >
-                        Remove
-                      </button>
                     </div>
                   </div>
                 );

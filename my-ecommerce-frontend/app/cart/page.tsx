@@ -119,72 +119,108 @@ export default function CartPage() {
             {/* Cart Items */}
             <div className="space-y-4 mb-8">
               <AnimatePresence mode="popLayout">
-                {items.map((item, idx) => (
-                  <motion.div
-                    key={item.product._id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className="flex gap-4 bg-brand-panel p-4 rounded-2xl border border-brand-text/5 shadow-sm"
-                  >
-                    {/* Product Image */}
-                    <Link href={`/products/${item.product._id}`} className="w-24 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-brand-bg">
-                      {item.product.images?.[0] ? (
-                        <img
-                          src={getOptimizedImageUrl(item.product.images[0], 256)}
-                          alt={item.product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-brand-muted text-xs">No img</div>
-                      )}
-                    </Link>
+                {items.map((item, idx) => {
+                  const itemKey = item.product.itemKey || item.product._id;
 
-                    {/* Details */}
-                    <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
-                      <div>
-                        <h3 className="font-sans font-semibold text-sm text-brand-text truncate pr-6">
-                          {item.product.name}
-                        </h3>
-                        <p className="text-brand-muted text-xs font-sans capitalize mt-0.5">
-                          {typeof item.product.category === 'object' ? item.product.category.name : item.product.category}
-                        </p>
-                      </div>
+                  return (
+                    <motion.div
+                      key={itemKey}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="flex gap-4 bg-brand-panel p-4 rounded-2xl border border-brand-text/5 shadow-sm"
+                    >
+                      {/* Product Image */}
+                      <Link href={`/products/${item.product._id}`} className="w-24 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-brand-bg">
+                        {item.product.images?.[0] ? (
+                          <img
+                            src={getOptimizedImageUrl(item.product.images[0], 256)}
+                            alt={item.product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-brand-muted text-xs">No img</div>
+                        )}
+                      </Link>
 
-                      <div className="flex items-end justify-between mt-2">
-                        {/* Quantity Controls */}
-                        <div className="flex items-center gap-1 bg-brand-bg rounded-lg border border-brand-text/10">
-                          <button
-                            onClick={() => {
-                              if (item.quantity <= 1) {
-                                handleRemove(item.product._id, item.product.name);
-                              } else {
-                                updateQuantity(item.product._id, item.quantity - 1);
-                              }
-                            }}
-                            className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text transition-colors"
-                          >
-                            {item.quantity <= 1 ? <Trash2 className="w-3.5 h-3.5 text-red-400" /> : <Minus className="w-3.5 h-3.5" />}
-                          </button>
-                          <span className="w-8 text-center text-sm font-sans font-semibold">{item.quantity}</span>
-                          <button
-                            onClick={() => handleIncrease(item.product)}
-                            className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-accent transition-colors"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </button>
+                      {/* Details */}
+                      <div className="flex-1 flex flex-col justify-between min-w-0 py-0.5">
+                        <div>
+                          <div className="flex items-start justify-between gap-2">
+                            <Link href={`/products/${item.product._id}`} className="min-w-0 flex-1 hover:text-brand-accent transition-colors">
+                              <h3 className="font-sans font-semibold text-sm text-brand-text truncate">
+                                {item.product.name}
+                              </h3>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleRemove(itemKey, item.product.name)}
+                              className="p-1.5 -mr-1.5 -mt-1 rounded-lg text-brand-muted/70 hover:text-red-400 hover:bg-red-500/10 active:scale-95 transition-all flex items-center justify-center flex-shrink-0"
+                              aria-label={`Remove ${item.product.name} from bag`}
+                              title="Remove from bag"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <p className="text-brand-muted text-xs font-sans capitalize mt-0.5">
+                            {typeof item.product.category === 'object' ? item.product.category.name : item.product.category}
+                          </p>
+
+                          {/* Selected Variants */}
+                          {(item.product.selectedLength || item.product.selectedDensity) && (
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {item.product.selectedLength && (
+                                <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-brand-accent/15 text-brand-accent font-semibold border border-brand-accent/20">
+                                  {item.product.selectedLength}
+                                </span>
+                              )}
+                              {item.product.selectedDensity && (
+                                <span className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-brand-text/5 text-brand-muted font-medium">
+                                  {item.product.selectedDensity}
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
 
-                        {/* Price */}
-                        <p className="font-sans font-semibold text-base text-brand-text">
-                          ₵{(item.product.price * item.quantity).toFixed(2)}
-                        </p>
+                        <div className="flex items-end justify-between mt-3">
+                          {/* Quantity Controls */}
+                          <div className="flex items-center gap-1 bg-brand-bg rounded-lg border border-brand-text/10">
+                            <button
+                              onClick={() => {
+                                if (item.quantity <= 1) {
+                                  handleRemove(itemKey, item.product.name);
+                                } else {
+                                  updateQuantity(itemKey, item.quantity - 1);
+                                }
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-text transition-colors"
+                              aria-label={item.quantity <= 1 ? 'Remove item' : 'Decrease quantity'}
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="w-8 text-center text-sm font-sans font-semibold">{item.quantity}</span>
+                            <button
+                              onClick={() => handleIncrease(item.product)}
+                              className="w-8 h-8 flex items-center justify-center text-brand-muted hover:text-brand-accent transition-colors"
+                              aria-label="Increase quantity"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          {/* Price */}
+                          <p className="font-sans font-semibold text-base text-brand-text">
+                            ₵{(item.product.price * item.quantity).toFixed(2)}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             </div>
 
