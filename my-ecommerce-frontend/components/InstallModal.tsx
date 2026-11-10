@@ -19,32 +19,35 @@ export default function InstallModal() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal]);
 
-  if (!isModalOpen || isInstalled) return null;
-
   const isIOS = platform === 'ios';
   const isMacOS = platform === 'macos-safari';
   const hasDirectPrompt = Boolean(deferredPrompt);
+  const shouldShow = isModalOpen && !isInstalled;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={closeModal}
-          className="absolute inset-0 bg-black/70 backdrop-blur-md"
-        />
+      {shouldShow && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
+          />
 
-        {/* Modal Dialog */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 15 }}
-          transition={{ duration: 0.25, ease: 'easeOut' }}
-          className="relative w-full max-w-md bg-[#141418] border border-brand-accent/20 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-brand-text"
-        >
+          {/* Modal Dialog */}
+          <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pwa-install-title"
+            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 15 }}
+            transition={{ duration: 0.25, ease: 'easeOut' }}
+            className="relative w-full max-w-md bg-[#141418] border border-brand-accent/20 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden text-brand-text"
+          >
           {/* Subtle Ambient Glow */}
           <div className="absolute top-0 right-0 w-48 h-48 bg-brand-accent/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -190,6 +193,7 @@ export default function InstallModal() {
           </button>
         </motion.div>
       </div>
+      )}
     </AnimatePresence>
   );
 }

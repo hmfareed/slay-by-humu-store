@@ -83,10 +83,12 @@ export const usePWAStore = create<PWAStore>((set, get) => ({
         deferredPrompt.prompt();
         const choice = await deferredPrompt.userChoice;
         if (choice?.outcome === 'accepted') {
-          set({ isInstalled: true, deferredPrompt: null, isInstallable: false });
+          set({ isInstalled: true });
         }
       } catch (err) {
         console.error('Error triggering PWA install prompt', err);
+      } finally {
+        set({ deferredPrompt: null, isInstallable: false });
       }
     } else {
       // For iOS Safari, macOS Safari, or browsers without deferred prompt, open guided instructions

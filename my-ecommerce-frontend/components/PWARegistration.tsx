@@ -39,7 +39,14 @@ export default function PWARegistration() {
     const ua = navigator.userAgent;
     let detectedPlatform: PWAPlatform = 'other';
 
-    if (/iPad|iPhone|iPod/.test(ua) && !(window as unknown as { MSStream?: unknown }).MSStream) {
+    const isIPad =
+      /Macintosh/.test(ua) &&
+      Boolean(typeof navigator !== 'undefined' && navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+    const isIOS =
+      (/iPad|iPhone|iPod/.test(ua) || isIPad) &&
+      !(window as unknown as { MSStream?: unknown }).MSStream;
+
+    if (isIOS) {
       detectedPlatform = 'ios';
     } else if (/Android/.test(ua)) {
       detectedPlatform = 'android';
