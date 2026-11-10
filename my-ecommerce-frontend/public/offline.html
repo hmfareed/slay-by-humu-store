@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f11" />
+  <title>Offline | Slay by Humu</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: #0f0f11;
+      color: #f5f5f7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container {
+      max-width: 440px;
+      width: 100%;
+      background: rgba(25, 25, 30, 0.7);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 28px;
+      padding: 40px 28px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .icon-wrapper {
+      width: 76px;
+      height: 76px;
+      margin: 0 auto 24px;
+      border-radius: 50%;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #D4AF37;
+    }
+    .icon-wrapper svg {
+      width: 36px;
+      height: 36px;
+    }
+    .badge {
+      display: inline-block;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      color: #D4AF37;
+      background: rgba(212, 175, 55, 0.12);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      margin-bottom: 16px;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+    }
+    h1 {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #ffffff;
+      margin-bottom: 12px;
+    }
+    p {
+      color: #a1a1aa;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, #D4AF37 0%, #AA7C11 100%);
+      color: #0f0f11;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border: none;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+      box-shadow: 0 8px 20px rgba(212, 175, 55, 0.25);
+    }
+    .btn:hover {
+      opacity: 0.94;
+      transform: translateY(-1px);
+    }
+    .btn:active {
+      transform: translateY(1px);
+    }
+    .footer-text {
+      margin-top: 24px;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      color: #71717a;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon-wrapper">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="1" y1="1" x2="23" y2="23"></line>
+        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
+        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+        <line x1="12" y1="20" x2="12.01" y2="20"></line>
+      </svg>
+    </div>
+    <span class="badge">Connection Paused</span>
+    <h1>You are currently offline</h1>
+    <p>Please check your internet connection to continue browsing luxury pieces and completing purchases.</p>
+    <button class="btn" onclick="window.location.reload()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+      </svg>
+      Retry Connection
+    </button>
+    <div class="footer-text">Slay by Humu Store</div>
+  </div>
+</body>
+</html>
