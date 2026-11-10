@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, LayoutGrid, ShoppingBag, Heart, UserCircle, X } from 'lucide-react';
+import { Home, LayoutGrid, ShoppingBag, Heart, UserCircle, X, Download } from 'lucide-react';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
+import { usePWAStore } from '@/src/store/pwaStore';
 
 const tabs = [
   { href: '/', label: 'Home', icon: Home },
@@ -22,6 +23,7 @@ export default function SlideOutNav() {
 
   const cartCount = useCartStore((s) => s.getTotalItems());
   const wishlistCount = useWishlistStore((s) => s.items.length);
+  const { isInstalled, promptInstall } = usePWAStore();
 
   useEffect(() => {
     setMounted(true);
@@ -126,6 +128,22 @@ export default function SlideOutNav() {
             );
           })}
         </div>
+
+        {/* Footer / Install App */}
+        {!isInstalled && (
+          <div className="p-4 border-t border-brand-text/5">
+            <button
+              onClick={() => {
+                handleClose();
+                promptInstall();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-sans font-medium text-brand-text hover:bg-brand-accent/10 hover:text-brand-accent transition-colors"
+            >
+              <Download className="w-5 h-5 text-brand-accent" />
+              <span>Install App</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

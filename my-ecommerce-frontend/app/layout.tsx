@@ -12,6 +12,8 @@ import { LanguageProvider } from "@/src/context/LanguageContext";
 import Toaster from "@/components/Toaster";
 import CartFlyAnimation from "@/components/CartFlyAnimation";
 import PWARegistration from "@/components/PWARegistration";
+import InstallBanner from "@/components/InstallBanner";
+import InstallModal from "@/components/InstallModal";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -68,6 +70,8 @@ export default function RootLayout({
               </LanguageProvider>
             </AuthProvider>
             <Toaster />
+            <InstallBanner />
+            <InstallModal />
           </NotificationProvider>
         </ThemeProvider>
       </body>

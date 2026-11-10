@@ -4,13 +4,14 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   ArrowLeft, User, Package, MapPin, CreditCard, Settings, LogOut,
-  ChevronRight, ShoppingBag, Heart, Moon, Sun, Bell, MessageCircle, Clock
+  ChevronRight, ShoppingBag, Heart, Moon, Sun, Bell, MessageCircle, Clock, Download
 } from 'lucide-react';
 import { useAuth } from '@/src/context/AuthContext';
 import { useNotification } from '@/src/context/NotificationContext';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
 import { useNotificationStore } from '@/src/store/notificationStore';
+import { usePWAStore } from '@/src/store/pwaStore';
 import { useTheme } from 'next-themes';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { API_URL } from '@/src/lib/api';
@@ -22,6 +23,7 @@ export default function AccountPage() {
   const { user, token, isLoggedIn, isLoading, logout, refreshUser, orderCount } = useAuth();
   const { showNotification } = useNotification();
   const { theme, setTheme } = useTheme();
+  const { isInstalled, openModal } = usePWAStore();
   const cartCount = useCartStore((s) => s.getTotalItems());
   const wishlistCount = useWishlistStore((s) => s.items.length);
   const [mounted, setMounted] = useState(false);
@@ -270,6 +272,25 @@ export default function AccountPage() {
         </div>
         <ThemeToggle />
       </div>
+
+      {/* Install App (PWA) */}
+      {!isInstalled && (
+        <button
+          onClick={openModal}
+          className="w-full bg-brand-panel hover:bg-brand-text/[0.03] rounded-2xl border border-brand-accent/20 px-6 py-4 flex items-center justify-between mb-6 transition-colors group text-left"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-brand-accent/10 flex items-center justify-center text-brand-accent group-hover:scale-105 transition-transform">
+              <Download className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-sans font-medium text-sm text-brand-text group-hover:text-brand-accent transition-colors">Install App</p>
+              <p className="text-brand-muted text-xs font-sans">Add to home screen for fast full-screen shopping</p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-brand-muted flex-shrink-0 group-hover:text-brand-accent transition-colors" />
+        </button>
+      )}
 
       {/* Logout */}
       {isLoggedIn && (
