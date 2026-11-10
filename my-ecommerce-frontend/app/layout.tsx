@@ -11,6 +11,7 @@ import { AuthProvider } from "@/src/context/AuthContext";
 import { LanguageProvider } from "@/src/context/LanguageContext";
 import Toaster from "@/components/Toaster";
 import CartFlyAnimation from "@/components/CartFlyAnimation";
+import PWARegistration from "@/components/PWARegistration";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -54,6 +55,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${playfair.variable} font-sans min-h-full flex flex-col bg-brand-bg text-brand-text transition-colors duration-500`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <NotificationProvider>
+            <PWARegistration />
             <AuthProvider>
               <LanguageProvider>
                 <SmoothScroll>
