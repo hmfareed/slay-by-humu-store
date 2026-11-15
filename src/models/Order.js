@@ -41,7 +41,7 @@ const orderSchema = new mongoose.Schema({
   },
   paystackReference: {
     type: String,
-    default: null
+    sparse: true
   },
   // The Paystack processing fee (1.95%) added on top and paid by the customer
   processingFee: {
@@ -79,6 +79,9 @@ const orderSchema = new mongoose.Schema({
 
 // Every order must belong to either a registered user or a guest with an email
 orderSchema.pre('validate', function (next) {
+  if (this.paystackReference === null) {
+    this.paystackReference = undefined;
+  }
   if (!this.user && !(this.guest && this.guest.email)) {
     this.invalidate('guest.email', 'Guest orders require an email address');
   }

@@ -23,12 +23,26 @@ const products = {
 
 // ---- stubs -----------------------------------------------------------------
 let created = null;
+const sparseUniqueSeen = { paystackReference: new Set(), orderNumber: new Set() };
 Product.find = (q) => ({ select: async () => q._id.$in.map((id) => products[id]).filter(Boolean) });
 Cart.findOne = async () => null;
 Cart.findOneAndUpdate = async () => null;
 Order.create = async (doc) => {
   const order = new Order(doc);
   await order.validate();
+  const raw = order.toObject();
+  // Simulate MongoDB sparse unique indexes (null is indexed and collides; only undefined is skipped)
+  for (const field of ['paystackReference', 'orderNumber']) {
+    if (Object.prototype.hasOwnProperty.call(raw, field)) {
+      const val = raw[field];
+      if (sparseUniqueSeen[field].has(val)) {
+        const err = new Error(`E11000 duplicate key error collection: test.orders index: ${field}_1 dup key: { ${field}: ${JSON.stringify(val)} }`);
+        err.code = 11000;
+        throw err;
+      }
+      sparseUniqueSeen[field].add(val);
+    }
+  }
   created = order;
   return order;
 };

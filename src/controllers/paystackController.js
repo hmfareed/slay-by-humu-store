@@ -4,8 +4,14 @@ const Order = require('../models/Order');
 const { createNotification } = require('./notificationController');
 const { tokenMatches } = require('../utils/orderAccess');
 
-const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+const getPaystackSecret = () => (process.env.PAYSTACK_SECRET_KEY || '').trim();
 const PAYSTACK_BASE = 'https://api.paystack.co';
+
+const getFrontendOrigin = () => {
+  const raw = (process.env.FRONTEND_URL || 'http://localhost:3000').trim().replace(/\/+$/, '');
+  if (/^https?:\/\//i.test(raw)) return raw;
+  return raw.startsWith('localhost') || raw.startsWith('127.0.0.1') ? `http://${raw}` : `https://${raw}`;
+};
 
 // @desc    Initialize a Paystack payment for an existing order
 // @route   POST /api/payments/initialize
@@ -84,11 +90,11 @@ const initializePayment = async (req, res) => {
           processingFee: processingFee.toFixed(2),
           chargedAmount: chargedAmount.toFixed(2),
         },
-        callback_url: `${process.env.FRONTEND_URL}/checkout/success`,
+        callback_url: `${getFrontendOrigin()}/checkout/success`,
       },
       {
         headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET}`,
+          Authorization: `Bearer ${getPaystackSecret()}`,
           'Content-Type': 'application/json',
         },
       }
@@ -125,7 +131,7 @@ const verifyPayment = async (req, res) => {
     const paystackRes = await axios.get(
       `${PAYSTACK_BASE}/transaction/verify/${encodeURIComponent(reference)}`,
       {
-        headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` },
+        headers: { Authorization: `Bearer ${getPaystackSecret()}` },
       }
     );
 
@@ -194,7 +200,7 @@ const paystackWebhook = async (req, res) => {
 
   // Validate the webhook signature using HMAC SHA-512
   const hash = crypto
-    .createHmac('sha512', PAYSTACK_SECRET)
+    .createHmac('sha512', getPaystackSecret())
     .update(JSON.stringify(req.body))
     .digest('hex');
 

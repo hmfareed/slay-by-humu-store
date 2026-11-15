@@ -27,7 +27,12 @@ export default function CheckoutPage() {
   const [redirecting, setRedirecting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
-  const [paystackOrderId, setPaystackOrderId] = useState(''); // set when order is created for Paystack
+  const [pendingOrder, setPendingOrder] = useState<{
+    orderId: string;
+    orderNumber?: string;
+    guestToken?: string;
+    fingerprint: string;
+  } | null>(null);
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
 
   // (Removed manual Mobile Money state)
@@ -152,36 +157,60 @@ export default function CheckoutPage() {
     if (token) headers.Authorization = `Bearer ${token}`;
 
     try {
-      // 1. Create the order (server prices items from the database)
-      const orderRes = await fetch(`${API_URL}/orders`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          shippingAddress,
-          paymentMethod: 'Paystack',
-          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity })),
-          ...(isGuest
-            ? { guest: { name: guestContact.name.trim(), email: guestContact.email.trim(), phone: shippingAddress.phoneNumber } }
-            : {}),
-        }),
+      const orderItemsPayload = cartItems.map(item => ({ product: item.product._id, quantity: item.quantity }));
+      const guestPayload = isGuest
+        ? { name: guestContact.name.trim(), email: guestContact.email.trim(), phone: shippingAddress.phoneNumber }
+        : undefined;
+      const fingerprint = JSON.stringify({
+        isGuest,
+        guest: guestPayload ? { ...guestPayload, email: guestPayload.email.toLowerCase() } : null,
+        shippingAddress,
+        items: orderItemsPayload,
       });
 
-      const orderData = await orderRes.json();
+      let activeOrderId = pendingOrder?.fingerprint === fingerprint ? pendingOrder.orderId : '';
+      let activeGuestToken = pendingOrder?.fingerprint === fingerprint ? pendingOrder.guestToken : undefined;
 
-      if (!orderRes.ok) {
-        showNotification(orderData.message || 'Failed to create order', 'error');
-        setLoading(false);
-        return;
-      }
-
-      // Keep the guest's order access token on this device for payment + tracking
-      if (isGuest && orderData.guestToken) {
-        saveGuestOrder({
-          orderId: orderData.order._id,
-          orderNumber: orderData.order.orderNumber,
-          token: orderData.guestToken,
-          createdAt: Date.now(),
+      // 1. Create the order (server prices items from the database) unless retrying the exact same checkout
+      if (!activeOrderId) {
+        const orderRes = await fetch(`${API_URL}/orders`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            shippingAddress,
+            paymentMethod: 'Paystack',
+            items: orderItemsPayload,
+            ...(isGuest ? { guest: guestPayload } : {}),
+          }),
         });
+
+        const orderData = await orderRes.json();
+
+        if (!orderRes.ok) {
+          showNotification(orderData.message || 'Failed to create order', 'error');
+          setLoading(false);
+          return;
+        }
+
+        activeOrderId = orderData.order._id;
+        activeGuestToken = orderData.guestToken;
+
+        setPendingOrder({
+          orderId: activeOrderId,
+          orderNumber: orderData.order.orderNumber,
+          guestToken: activeGuestToken,
+          fingerprint,
+        });
+
+        // Keep the guest's order access token on this device for payment + tracking
+        if (isGuest && activeGuestToken) {
+          saveGuestOrder({
+            orderId: activeOrderId,
+            orderNumber: orderData.order.orderNumber,
+            token: activeGuestToken,
+            createdAt: Date.now(),
+          });
+        }
       }
 
       // 2. Initialize Paystack payment
@@ -189,8 +218,8 @@ export default function CheckoutPage() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          orderId: orderData.order._id,
-          ...(isGuest ? { guestToken: orderData.guestToken } : {}),
+          orderId: activeOrderId,
+          ...(isGuest ? { guestToken: activeGuestToken } : {}),
         }),
       });
 
