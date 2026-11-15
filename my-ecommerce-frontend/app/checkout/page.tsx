@@ -10,10 +10,12 @@ import { useNotification } from '@/src/context/NotificationContext';
 import { useAuth } from '@/src/context/AuthContext';
 import { API_URL } from '@/src/lib/api';
 import { getOptimizedImageUrl } from '@/src/lib/images';
+import { saveGuestOrder } from '@/src/lib/guestOrders';
 
 export default function CheckoutPage() {
   const { showNotification } = useNotification();
   const { token } = useAuth();
+  const [guestContact, setGuestContact] = useState({ name: '', email: '' });
   const [shippingAddress, setShippingAddress] = useState({
     address: '',
     city: '',
@@ -129,9 +131,14 @@ export default function CheckoutPage() {
     if (cartItems.length === 0) return;
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      showNotification('You must be logged in to checkout', 'error');
-      return;
+    const isGuest = !token;
+
+    if (isGuest) {
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(guestContact.email.trim());
+      if (!guestContact.name.trim() || !emailOk) {
+        showNotification('Please enter your full name and a valid email address', 'error');
+        return;
+      }
     }
 
     if (!shippingAddress.address || !shippingAddress.city || !shippingAddress.postalCode || !shippingAddress.phoneNumber) {
@@ -141,18 +148,21 @@ export default function CheckoutPage() {
 
     setLoading(true);
 
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers.Authorization = `Bearer ${token}`;
+
     try {
-      // 1. Create the order
+      // 1. Create the order (server prices items from the database)
       const orderRes = await fetch(`${API_URL}/orders`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
         body: JSON.stringify({
           shippingAddress,
           paymentMethod: 'Paystack',
-          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity, price: item.product.price }))
+          items: cartItems.map(item => ({ product: item.product._id, quantity: item.quantity })),
+          ...(isGuest
+            ? { guest: { name: guestContact.name.trim(), email: guestContact.email.trim(), phone: shippingAddress.phoneNumber } }
+            : {}),
         }),
       });
 
@@ -164,14 +174,24 @@ export default function CheckoutPage() {
         return;
       }
 
+      // Keep the guest's order access token on this device for payment + tracking
+      if (isGuest && orderData.guestToken) {
+        saveGuestOrder({
+          orderId: orderData.order._id,
+          orderNumber: orderData.order.orderNumber,
+          token: orderData.guestToken,
+          createdAt: Date.now(),
+        });
+      }
+
       // 2. Initialize Paystack payment
       const paystackRes = await fetch(`${API_URL}/payments/initialize`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ orderId: orderData.order._id }),
+        headers,
+        body: JSON.stringify({
+          orderId: orderData.order._id,
+          ...(isGuest ? { guestToken: orderData.guestToken } : {}),
+        }),
       });
 
       const paystackData = await paystackRes.json();
@@ -385,7 +405,7 @@ export default function CheckoutPage() {
             <Link href="/" className="hover:text-brand-accent transition-colors hidden md:block">Home</Link>
             <Link href="/products" className="hover:text-brand-accent transition-colors">Shop</Link>
             <Link href="/cart" className="hover:text-brand-accent transition-colors hidden md:block">Cart</Link>
-            <Link href="/login" className="hover:text-brand-accent transition-colors hidden md:block">Account</Link>
+            <Link href={token ? '/account' : '/login?redirect=/checkout'} className="hover:text-brand-accent transition-colors hidden md:block">Account</Link>
             <ThemeToggle />
           </div>
         </div>
@@ -414,14 +434,53 @@ export default function CheckoutPage() {
               <h2 className="text-3xl font-bold mb-12 tracking-tight">Delivery Details</h2>
               
               {!token && (
-                <div className="bg-brand-text/5 p-6 rounded-2xl mb-10 flex flex-col sm:flex-row items-center justify-between gap-4 border border-brand-text/10">
-                  <div>
-                    <h3 className="font-serif font-bold text-lg mb-1 text-brand-text">Guest Checkout</h3>
-                    <p className="text-brand-muted text-sm font-sans">Create an account to easily track your bespoke orders.</p>
+                <div className="mb-12 space-y-8">
+                  <div className="bg-brand-text/5 p-6 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-brand-text/10">
+                    <div>
+                      <h3 className="font-serif font-bold text-lg mb-1 text-brand-text">Checking out as a guest</h3>
+                      <p className="text-brand-muted text-sm font-sans">Have an account? Log in to use your saved addresses.</p>
+                    </div>
+                    <Link href="/login?redirect=/checkout" className="btn-secondary py-3 px-6 whitespace-nowrap text-xs">
+                      Log In
+                    </Link>
                   </div>
-                  <Link href="/login" className="btn-secondary py-3 px-6 whitespace-nowrap text-xs">
-                    Create Account
-                  </Link>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-12 font-sans">
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="guest-name" className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                        Full Name
+                      </label>
+                      <input
+                        id="guest-name"
+                        type="text"
+                        name="name"
+                        autoComplete="name"
+                        value={guestContact.name}
+                        onChange={(e) => setGuestContact({ ...guestContact, name: e.target.value })}
+                        className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                        placeholder="e.g. Ama Mensah"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="guest-email" className="text-xs font-sans font-medium tracking-widest uppercase text-brand-muted">
+                        Email
+                      </label>
+                      <input
+                        id="guest-email"
+                        type="email"
+                        name="email"
+                        autoComplete="email"
+                        inputMode="email"
+                        value={guestContact.email}
+                        onChange={(e) => setGuestContact({ ...guestContact, email: e.target.value })}
+                        className="w-full px-4 py-4 bg-transparent border border-brand-text/10 focus:outline-none focus:border-brand-accent transition-colors text-base font-light rounded-none"
+                        placeholder="you@example.com"
+                        required
+                      />
+                      <p className="text-xs text-brand-muted">For your Paystack receipt and to look up your order later.</p>
+                    </div>
+                  </div>
                 </div>
               )}
 

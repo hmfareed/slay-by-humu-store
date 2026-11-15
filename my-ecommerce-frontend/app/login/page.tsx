@@ -12,6 +12,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useCartStore } from '@/src/store/cartStore';
 import { useWishlistStore } from '@/src/store/wishlistStore';
 import { API_URL } from '@/src/lib/api';
+import { claimGuestOrder } from '@/src/lib/guestOrders';
 
 export default function LoginPage() {
   const { showNotification } = useNotification();
@@ -76,19 +77,36 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (res.ok) {
-        if (!isLogin) {
+        const params = new URLSearchParams(window.location.search);
+        // Only allow same-site relative redirects (blocks open redirects like //evil.com)
+        const rawRedirect = params.get('redirect') || '';
+        const redirectTo = /^\/(?!\/)[\w\-/?=&.%]*$/.test(rawRedirect) ? rawRedirect : '';
+        const claimOrderId = params.get('claim') || '';
+
+        // Keep the guest's cart when they're logging in mid-checkout
+        if (!isLogin && !redirectTo.startsWith('/checkout')) {
           clearCart();
           clearWishlist();
         }
 
         login(data.token, { _id: data._id, name: data.name, email: data.email, role: data.role || 'user' });
-        showNotification(isLogin ? 'Login successful! Redirecting...' : 'Account created successfully!', 'success');
+
+        // Link the guest order the customer explicitly chose to save
+        if (claimOrderId) {
+          const linked = await claimGuestOrder(data.token, claimOrderId);
+          showNotification(
+            linked ? 'Your order has been saved to your account.' : 'Signed in, but we could not link that order.',
+            linked ? 'success' : 'info'
+          );
+        } else {
+          showNotification(isLogin ? 'Login successful! Redirecting...' : 'Account created successfully!', 'success');
+        }
         
         setTimeout(() => {
           if (data.role === 'admin') {
             router.push('/admin');
           } else {
-            router.push('/');
+            router.push(redirectTo || '/');
           }
         }, 1200);
       } else {

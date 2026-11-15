@@ -5,6 +5,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { API_URL } from '@/src/lib/api';
+import { findGuestOrder } from '@/src/lib/guestOrders';
+import { useCartStore } from '@/src/store/cartStore';
 import { motion } from 'framer-motion';
 
 function PaymentSuccessContent() {
@@ -15,6 +17,10 @@ function PaymentSuccessContent() {
   const [status, setStatus] = useState<'verifying' | 'success' | 'failed'>('verifying');
   const [message, setMessage] = useState('');
   const [orderId, setOrderId] = useState('');
+  const [orderNumber, setOrderNumber] = useState('');
+  const [guestToken, setGuestToken] = useState('');
+  const [isGuestOrder, setIsGuestOrder] = useState(false);
+  const clearCart = useCartStore((s) => s.clearCart);
 
   useEffect(() => {
     if (!reference) {
@@ -26,15 +32,22 @@ function PaymentSuccessContent() {
     const verify = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_URL}/payments/verify/${reference}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await fetch(`${API_URL}/payments/verify/${encodeURIComponent(reference)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
         const data = await res.json();
 
         if (res.ok) {
           setStatus('success');
-          setOrderId(data.order?._id || '');
+          const id = data.order?._id || '';
+          setOrderId(id);
+          setOrderNumber(data.order?.orderNumber || '');
+          setIsGuestOrder(!!data.order?.isGuest);
+          if (data.order?.isGuest && id) {
+            setGuestToken(findGuestOrder(id)?.token || '');
+          }
+          clearCart();
           setMessage('Your payment was received successfully. Your order is now being processed.');
         } else {
           setStatus('failed');
@@ -47,7 +60,7 @@ function PaymentSuccessContent() {
     };
 
     verify();
-  }, [reference]);
+  }, [reference, clearCart]);
 
   return (
     <div className="min-h-screen bg-brand-bg flex items-center justify-center p-6">
@@ -76,13 +89,18 @@ function PaymentSuccessContent() {
             </motion.div>
             <h1 className="text-3xl font-serif font-bold mb-3 tracking-tight">Payment Successful!</h1>
             <p className="text-brand-muted font-sans text-sm mb-2">{message}</p>
+            {orderNumber && (
+              <p className="font-sans text-sm mb-1">
+                Order number: <span className="font-mono font-semibold tracking-wide">{orderNumber}</span>
+              </p>
+            )}
             {reference && (
               <p className="text-xs font-mono text-brand-muted mb-8">Ref: {reference}</p>
             )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {orderId && (
                 <Link
-                  href="/account/orders"
+                  href={guestToken ? `/track-order/${guestToken}` : isGuestOrder ? '/track-order' : '/account/orders'}
                   className="btn-gold px-8 py-3 text-sm shadow-soft"
                 >
                   Track Order
@@ -95,6 +113,19 @@ function PaymentSuccessContent() {
                 Continue Shopping
               </Link>
             </div>
+            {guestToken && (
+              <div className="mt-8 pt-6 border-t border-brand-text/10 font-sans text-sm">
+                <p className="text-brand-muted mb-3">
+                  Save your order number. Create an account or log in to keep this order in your order history.
+                </p>
+                <Link
+                  href={`/login?claim=${orderId}&redirect=/account/orders`}
+                  className="text-brand-accent font-medium hover:underline"
+                >
+                  Save this order to an account →
+                </Link>
+              </div>
+            )}
           </>
         )}
 

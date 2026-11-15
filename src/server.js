@@ -20,6 +20,9 @@ const reviewRoutes = require('./routes/reviewRoutes');
 const paystackRoutes = require('./routes/paystackRoutes');
 const app = express();
 
+// Behind Render's proxy: use the client IP from X-Forwarded-For (needed for rate limiting)
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(cors({
   origin: [

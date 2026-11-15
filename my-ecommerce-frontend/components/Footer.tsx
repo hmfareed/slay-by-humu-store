@@ -68,6 +68,7 @@ export default function Footer() {
               <ul className="space-y-3 text-sm text-brand-text/80">
                 <li><Link href="/login" className="hover:text-brand-accent transition-colors">Sign In</Link></li>
                 <li><Link href="/login" className="hover:text-brand-accent transition-colors">Register</Link></li>
+                <li><Link href="/track-order" className="hover:text-brand-accent transition-colors">Track Order</Link></li>
               </ul>
             </div>
 

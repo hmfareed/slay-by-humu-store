@@ -23,7 +23,10 @@ import ProductThumbnail from '@/components/admin/ProductThumbnail';
 
 interface Order {
   _id: string;
-  user: { _id: string; name: string; email: string; phone?: string };
+  user: { _id: string; name: string; email: string; phone?: string } | null;
+  guest?: { name?: string; email?: string; phone?: string };
+  isGuest?: boolean;
+  orderNumber?: string;
   items: { product: any; quantity: number; price: number }[];
   shippingAddress: { address: string; city: string; country: string; postalCode: string; phoneNumber?: string };
   totalAmount: number;
@@ -232,6 +235,9 @@ export default function AdminOrdersPage() {
   const filteredOrders = orders.filter(o =>
     (o._id || '').toLowerCase().includes(search.toLowerCase()) ||
     (o.user && o.user.name?.toLowerCase().includes(search.toLowerCase())) ||
+        (o.guest?.name?.toLowerCase().includes(search.toLowerCase())) ||
+        (o.guest?.email?.toLowerCase().includes(search.toLowerCase())) ||
+        (o.orderNumber?.toLowerCase().includes(search.toLowerCase())) ||
     (o.shippingAddress?.address && o.shippingAddress.address.toLowerCase().includes(search.toLowerCase()))
   );
 
@@ -399,9 +405,9 @@ export default function AdminOrdersPage() {
                     #{order._id.substring(0, 8)}
                   </span>
                   <p className="font-semibold text-zinc-900 dark:text-white text-sm mt-0.5">
-                    {order.user?.name || 'Guest Checkout'}
+                    {order.user?.name || (order.guest?.name ? order.guest.name + ' (Guest)' : 'Guest Checkout')}
                   </p>
-                  <p className="text-xs text-zinc-500">{order.user?.email || 'N/A'}</p>
+                  <p className="text-xs text-zinc-500">{order.user?.email || order.guest?.email || 'N/A'}</p>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${statusBadge(order.status)}`}>
                   {order.status}
@@ -534,8 +540,8 @@ export default function AdminOrdersPage() {
                       #{order._id.substring(0, 8)}
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-zinc-900 dark:text-white text-sm">{order.user?.name || 'Guest Checkout'}</p>
-                      <p className="text-xs text-zinc-500">{order.user?.email || 'N/A'}</p>
+                      <p className="font-semibold text-zinc-900 dark:text-white text-sm">{order.user?.name || (order.guest?.name ? order.guest.name + ' (Guest)' : 'Guest Checkout')}</p>
+                      <p className="text-xs text-zinc-500">{order.user?.email || order.guest?.email || 'N/A'}</p>
                     </td>
                     <td className="px-6 py-4 text-xs text-zinc-600 dark:text-zinc-400 tabular-nums">
                       {new Date(order.createdAt).toLocaleDateString()}
@@ -667,10 +673,10 @@ export default function AdminOrdersPage() {
                   <h3 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-2.5 flex items-center gap-2">
                     <User size={13} className="text-[#C5A059]" /> Client Profile
                   </h3>
-                  <p className="font-medium text-zinc-900 dark:text-white text-sm">{selectedOrder.user?.name || 'Guest'}</p>
-                  <p className="text-xs text-zinc-500 mt-0.5">{selectedOrder.user?.email || 'N/A'}</p>
-                  {selectedOrder.user?.phone && (
-                    <p className="text-xs text-zinc-500 font-mono mt-0.5 tabular-nums">{selectedOrder.user.phone}</p>
+                  <p className="font-medium text-zinc-900 dark:text-white text-sm">{selectedOrder.user?.name || (selectedOrder.guest?.name ? selectedOrder.guest.name + ' (Guest)' : 'Guest')}</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">{selectedOrder.user?.email || selectedOrder.guest?.email || 'N/A'}</p>
+                  {(selectedOrder.user?.phone || selectedOrder.guest?.phone) && (
+                    <p className="text-xs text-zinc-500 font-mono mt-0.5 tabular-nums">{selectedOrder.user?.phone || selectedOrder.guest?.phone}</p>
                   )}
                 </div>
 

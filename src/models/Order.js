@@ -52,7 +52,37 @@ const orderSchema = new mongoose.Schema({
   chargedAmount: {
     type: Number,
     default: 0
+  },
+  // Human-friendly order number shown to customers (e.g. SBH-7K3F9QXM)
+  orderNumber: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  // Contact details for guest (no-account) orders
+  guest: {
+    name: { type: String, trim: true },
+    email: { type: String, trim: true, lowercase: true },
+    phone: { type: String, trim: true }
+  },
+  isGuest: {
+    type: Boolean,
+    default: false
+  },
+  // SHA-256 hash of the guest's order access token (raw token is never stored)
+  accessTokenHash: {
+    type: String,
+    select: false,
+    index: true
   }
 }, { timestamps: true });
+
+// Every order must belong to either a registered user or a guest with an email
+orderSchema.pre('validate', function (next) {
+  if (!this.user && !(this.guest && this.guest.email)) {
+    this.invalidate('guest.email', 'Guest orders require an email address');
+  }
+  next();
+});
 
 module.exports = mongoose.model('Order', orderSchema);
